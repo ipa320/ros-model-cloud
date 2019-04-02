@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}ROS Model Extractor{% endblock %}</h1>
+<img src="{{ url_for('static', filename='img/SeRoNet_Logo.png') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col s4">
+        <div class="row">
+            {% for message in get_flashed_messages() %}
+            <div class="flash">{{ message }}</div>
+            {% endfor %}
+        </div>
+        <div class="row">
+
+            {% include 'preloader.html' %}
+
+            <form method="post">
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input name="repository" id="repository" value="{{ request.form['repository']}}"
+                               class="validate"
+                               type="text"
+                               required
+                        >
+                        <label for="repository">Github Repository</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input name="package" id="package" value="{{ request.form['package']}}" class="validate"
+                               type="text" required
+                        >
+                        <label for="package">Package</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input name="name" id="name" value="{{ request.form['name']}}" class="validate" type="text"
+                               required
+                        >
+                        <label for="name">Node</label>
+                    </div>
+                </div>
+
+                <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+                    <i class="material-icons right">send</i>
+                </button>
+
+            </form>
+        </div>
+    </div>
+    <div class="col s7">
+        {% if model %}
+        <pre>
+            <code>
+                {{ model }}
+            </code>
+        </pre>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+.content {
+    margin: 0 auto;
+    padding: 1em 4em;
+    margin-bottom: 50px;
+    line-height: 1.6em;
+}
+
+input[type="submit"] {
+    margin-top: 1em;
+}
+
+.header {
+     margin: 0 0 2em;
+     color: #333;
+     padding: 2.5em 2em 1em;
+     border-bottom: 1px solid #eee;
+     display: flex;
+     align-items: center;
+     justify-content: space-around;
+}
+
+img {
+    max-height: 100px;
+}
+
+.flash {
+    color: #b80303;
+    font-size: 1.2em;
+}
+
+.preloader-wrapper.active {
+    position: fixed;
+    top: 30%;
+    left: 15%;
+    display: none;
+}
+
+.show-preloader {
+    display: block;
+}
+
+.loading {
+    opacity: 0.5;
+}
+
+.header h1 {
+        margin: 0.2em 1em;
+        font-size: 2em;
+        font-weight: 400;
+    }

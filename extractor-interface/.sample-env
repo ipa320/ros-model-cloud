@@ -1,0 +1,4 @@
+FLASK_ENV=development
+FLASK_APP=flaskr
+WORKSPACE_DIR="Path to the workspace dir"
+GIT_TERMINAL_PROMPT=0
