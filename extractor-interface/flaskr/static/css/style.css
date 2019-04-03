@@ -47,4 +47,10 @@ img {
         margin: 0.2em 1em;
         font-size: 2em;
         font-weight: 400;
-    }
+}
+
+.log {
+    max-height: 70vh;
+    overflow: scroll;
+    padding-left: 5em;
+}

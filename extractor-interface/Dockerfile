@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     libclang-3.8-dev \
     python-pip \
     llvm-3.8-dev \
-    wget
+    wget \
+    netbase
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/llvm-3.8/lib
 
@@ -50,8 +51,10 @@ COPY ./wsgi.py .
 ENV FLASK_APP flaskr
 RUN pip install Flask \
     Redis \
-    gunicorn
+    gunicorn \
+    eventlet \
+    flask_socketio
 
 EXPOSE 5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "300", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "eventlet", "-w", "1", "wsgi:app"]
 

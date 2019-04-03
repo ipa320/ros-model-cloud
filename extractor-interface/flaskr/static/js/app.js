@@ -12,6 +12,20 @@ function checkRequiredFields (fields) {
     return shouldShowPreloader;
 }
 
+namespace = '';
+
+var log = document.querySelector(".log")
+
+var socket = io.connect('http://localhost' + ':' + location.port + namespace);
+
+socket.on('run_event', function(message) {
+     var span = document.createElement("span");
+     var content = document.createTextNode(message.data);
+     span.appendChild(content);
+     log.appendChild(span)
+     log.appendChild(document.createElement("br"))
+});
+
 submitButton.onclick = function (e) {
     var shouldShowPreloader = checkRequiredFields(requiredFields);
 

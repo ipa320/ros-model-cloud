@@ -2,10 +2,15 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
 
+from threading import Lock
+
 import subprocess
 import shlex
-import shutil
-import os
+from flaskr import socketio
+import eventlet
+
+thread = None
+thread_lock = Lock()
 
 bp = Blueprint('extractor', __name__, url_prefix='/')
 
@@ -29,15 +34,21 @@ def submit():
 
         if error:
             flash(error)
-            return render_template('/extractor.html')
+            return render_template('/extractor.html', async_mode=socketio.async_mode)
 
         shell_command = '/bin/bash /haros_runner.sh ' + repository + ' ' + package + ' ' + name
-        extractor = subprocess.Popen(shlex.split(shell_command))
-        extractor.wait()
 
-        path = '/root/haros/src/'
-        shutil.rmtree(path)
-        os.mkdir(path)
+
+        extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             bufsize=1)
+
+        for line in iter(extractor_process.stdout.readline, ''):
+            eventlet.sleep(1)
+            socketio.emit('run_event', {'data': line})
+            print line
+
+        extractor_process.wait()
 
         try:
             model_file = open('/root/' + name + '.ros')
@@ -45,4 +56,4 @@ def submit():
         except:
             flash('There was a problem with the model generation')
 
-    return render_template('/extractor.html', model=model)
+    return render_template('/extractor.html', model=model, async_mode=socketio.async_mode)

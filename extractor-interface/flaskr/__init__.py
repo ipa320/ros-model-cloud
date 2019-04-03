@@ -1,7 +1,9 @@
 import os
 
 from flask import Flask
+from flask_socketio import SocketIO
 
+socketio = SocketIO()
 
 def create_app(test_config=None):
     # create and configure the app
@@ -24,13 +26,10 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-
+    async_mode = 'eventlet'
     from . import extractor
     app.register_blueprint(extractor.bp)
+    socketio.init_app(app, async_mode=async_mode)
 
     return app
 
