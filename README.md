@@ -14,7 +14,6 @@ Run the app:
 ```shell
      export FLASK_APP=flaskr
      export FLASK_ENV=development
-     export WORKSPACE_DIR="path to the directory where the github repo should be cloned"
      flask run
 ```
 
