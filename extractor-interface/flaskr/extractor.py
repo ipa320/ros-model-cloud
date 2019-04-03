@@ -4,6 +4,8 @@ from flask import (
 
 import subprocess
 import shlex
+import shutil
+import os
 
 bp = Blueprint('extractor', __name__, url_prefix='/')
 
@@ -32,6 +34,10 @@ def submit():
         shell_command = '/bin/bash /haros_runner.sh ' + repository + ' ' + package + ' ' + name
         extractor = subprocess.Popen(shlex.split(shell_command))
         extractor.wait()
+
+        path = '/root/haros/src/'
+        shutil.rmtree(path)
+        os.mkdir(path)
 
         try:
             model_file = open('/root/' + name + '.ros')
