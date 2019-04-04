@@ -16,9 +16,8 @@ Run the app:
 ```shell
      export MODEL_PATH={Path to the location where the file with the model is saved}
      export HAROS_RUNNER={Path to the location of the haros runner script}
-     python wsgi.py
-     // OR
-     gunicorn --worker-class eventlet -w 1 wsgi:app
+     export HAROS_SRC={Path to the HAROS src folder}
+     gunicorn -k flask_sockets.worker wsgi:app
 ```
 
 Open http://127.0.0.1:5000 in a browser.
