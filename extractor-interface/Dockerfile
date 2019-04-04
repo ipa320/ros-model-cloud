@@ -48,12 +48,10 @@ COPY ./haros_runner.sh /
 COPY flaskr ./flaskr
 COPY ./wsgi.py .
 
-ENV FLASK_APP flaskr
-RUN pip install Flask \
-    Redis \
-    gunicorn \
-    eventlet \
-    flask_socketio
+ENV HAROS_RUNNER /haros_runner.sh
+ENV MODEL_PATH /root/
+ENV HAROS_SRC /root/haros/src
+RUN pip install -r requirements.txt
 
 EXPOSE 5000
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "eventlet", "-w", "1", "wsgi:app"]

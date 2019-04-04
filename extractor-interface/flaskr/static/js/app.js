@@ -32,5 +32,6 @@ submitButton.onclick = function (e) {
     if (shouldShowPreloader) {
         document.querySelector('form').classList.add('loading');
         document.querySelector('.preloader-wrapper').setAttribute("style", "display:block;");
+        document.querySelector('pre').remove()
     }
 }
