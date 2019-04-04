@@ -55,5 +55,4 @@ ENV HAROS_SRC /root/haros/src
 RUN pip install -r requirements.txt
 
 EXPOSE 5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "eventlet", "-w", "1", "wsgi:app"]
-
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "-k", "flask_sockets.worker", "wsgi:app"]

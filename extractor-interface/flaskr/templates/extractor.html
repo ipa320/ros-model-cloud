@@ -9,15 +9,13 @@
 <div class="row">
     <div class="col s4">
         <div class="row">
-            {% for message in get_flashed_messages() %}
-            <div class="flash">{{ message }}</div>
-            {% endfor %}
+            <div class="flash"></div>
         </div>
         <div class="row">
 
             {% include 'preloader.html' %}
 
-            <form method="post">
+            <form>
                 <div class="row">
                     <div class="input-field col s12">
                         <input name="repository" id="repository" value="{{ request.form['repository']}}"
@@ -55,14 +53,10 @@
         </div>
     </div>
     <div class="col s7">
-        {% if model %}
         <pre>
-            <code>
-                {{ model }}
+            <code id="model-code">
             </code>
         </pre>
-
-        {% endif %}
         <div class="log">
 
         </div>

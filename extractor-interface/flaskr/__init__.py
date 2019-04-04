@@ -1,9 +1,9 @@
 import os
 
 from flask import Flask
-from flask_socketio import SocketIO
+from flask_sockets import Sockets
 
-socketio = SocketIO()
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -29,7 +29,9 @@ def create_app(test_config=None):
     async_mode = 'eventlet'
     from . import extractor
     app.register_blueprint(extractor.bp)
-    socketio.init_app(app, async_mode=async_mode)
+
+    sockets_app = Sockets(app)
+    sockets_app.register_blueprint(extractor.ws)
 
     return app
 

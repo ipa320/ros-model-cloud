@@ -2,19 +2,16 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
 
-from threading import Lock
-
 import subprocess
 import shlex
-from flaskr import socketio
-import eventlet
 import shutil
 import os
+import json
 
-thread = None
-thread_lock = Lock()
 
-bp = Blueprint('extractor', __name__, url_prefix='/')
+bp = Blueprint('extractor', __name__)
+ws = Blueprint(r'extractor_ws', __name__)
+
 
 def get_repo_basename(repository):
     repo_name = repository[repository.rfind('/') + 1:]
@@ -29,48 +26,62 @@ def get_repo_basename(repository):
     return repo_name
 
 
-@bp.route('/', methods=('GET', 'POST'))
-def submit():
-    model = None
-
-    if request.method == 'POST':
-        repository = request.form['repository']
-        package = request.form['package']
-        name = request.form['name']
-        error = None
-
-        if not repository:
-            error = 'Please enter a valid repository name.'
-        elif not package:
-            error = 'Please enter a valid package name.'
-        elif not name:
-            error = 'Please enter a valid node name.'
-
-        if error:
-            flash(error)
-            return render_template('/extractor.html', async_mode=socketio.async_mode)
-
-        shell_command = '/bin/bash ' + os.environ['HAROS_RUNNER'] + ' ' + repository + ' ' + package + ' ' + name
+def create_message(message_type, message):
+    return json.dumps({'type': message_type, 'data': message})
 
 
-        extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
-                                             stderr=subprocess.STDOUT,
-                                             bufsize=1)
+@ws.route('/')
+def websocket(ws):
+    while not ws.closed:
+        message = ws.receive()
+        if message:
+            parsed = json.loads(message)
+            print parsed
 
-        for line in iter(extractor_process.stdout.readline, ''):
-            eventlet.sleep(1)
-            # TODO: this broadcasts the message to all clients
-            socketio.emit('run_event', {'data': line})
-            print line
+            repository = parsed['repository']
+            package = parsed['package']
+            name = parsed['name']
+            error = None
 
-        extractor_process.wait()
+            if not repository:
+                error = 'Please enter a valid repository name.'
+            elif not package:
+                error = 'Please enter a valid package name.'
+            elif not name:
+                error = 'Please enter a valid node name.'
 
-        try:
-            repo_name = get_repo_basename(repository)
-            shutil.rmtree(os.path.join(os.environ['HAROS_SRC'], repo_name))
-            model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'))
-            model = model_file.read()
-        except:
-            flash('There was a problem with the model generation')
+            if error:
+                error_message = create_message('error_event', error)
+                ws.send(error_message)
+            else:
+                shell_command = '/bin/bash ' + os.environ['HAROS_RUNNER'] + ' ' + repository + ' ' + package + ' ' + name
 
-    return render_template('/extractor.html', model=model, async_mode=socketio.async_mode)
+                extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
+                                                     stderr=subprocess.STDOUT,
+                                                     bufsize=1)
+
+                for line in iter(extractor_process.stdout.readline, ''):
+                    run_message = create_message('run_event', str(line))
+                    ws.send(run_message)
+                    print line
+
+                extractor_process.wait()
+
+                model = None
+
+                try:
+                    repo_name = get_repo_basename(repository)
+                    shutil.rmtree(os.path.join(os.environ['HAROS_SRC'], repo_name))
+                    model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'))
+                    model = model_file.read()
+                except:
+                    error_message = create_message('error_event', 'There was a problem with the model generation')
+                    ws.send(error_message)
+
+                model_message = create_message('model_event', model)
+                ws.send(model_message)
+
+
+@bp.route('/', methods=['GET'])
+def get_extractor():
+    return render_template('/extractor.html')

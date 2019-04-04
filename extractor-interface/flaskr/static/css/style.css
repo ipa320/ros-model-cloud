@@ -44,13 +44,13 @@ img {
 }
 
 .header h1 {
-        margin: 0.2em 1em;
-        font-size: 2em;
-        font-weight: 400;
+   margin: 0.2em 1em;
+   font-size: 2em;
+   font-weight: 400;
 }
 
 .log {
     max-height: 70vh;
-    overflow: scroll;
+    overflow-y: scroll;
     padding-left: 5em;
 }

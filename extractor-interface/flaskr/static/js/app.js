@@ -1,7 +1,12 @@
 var submitButton = document.querySelector('button[type="submit"]');
-var requiredFields = document.querySelectorAll("[required]")
+var form = document.querySelector('form');
+var preloader = document.querySelector('.preloader-wrapper');
+var modelCode = document.getElementById("model-code");
+var pre = document.querySelector("pre");
+var log = document.querySelector(".log");
+var flash = document.querySelector('.flash');
 
-function checkRequiredFields (fields) {
+function checkRequiredFields(fields) {
     var shouldShowPreloader = true;
     fields.forEach(function (field) {
         if (field.value === '') {
@@ -12,26 +17,66 @@ function checkRequiredFields (fields) {
     return shouldShowPreloader;
 }
 
-namespace = '';
+function stopLoading () {
+   form.classList.remove('loading');
+   preloader.setAttribute("style", "display:none;");
+}
 
-var log = document.querySelector(".log")
+function showError (errorMessage) {
+   var errorTextNode = document.createTextNode(errorMessage);
+   flash.appendChild(errorTextNode);
+}
 
-var socket = io.connect('http://localhost' + ':' + location.port + namespace);
+var socket = new WebSocket('ws://localhost:' + location.port);
 
-socket.on('run_event', function(message) {
-     var span = document.createElement("span");
-     var content = document.createTextNode(message.data);
-     span.appendChild(content);
-     log.appendChild(span)
-     log.appendChild(document.createElement("br"))
+socket.addEventListener('message', function (event) {
+    var message = JSON.parse(event.data);
+
+    if (message.type === 'run_event') {
+        var span = document.createElement("span");
+        var content = document.createTextNode(message.data);
+        span.appendChild(content);
+        log.appendChild(span);
+        log.appendChild(document.createElement("br"));
+        flash.innerHTML = "";
+
+    } else if (message.type === 'model_event') {
+        var model = message.data;
+        stopLoading();
+        modelTextNode = document.createTextNode(model);
+        modelCode.appendChild(modelTextNode);
+        pre.setAttribute("style", "height:auto;")
+        log.innerHTML = "";
+        flash.innerHTML = "";
+
+    } else if (message.type === 'error_event') {
+        showError(message.data);
+        stopLoading();
+    }
 });
 
+
 submitButton.onclick = function (e) {
-    var shouldShowPreloader = checkRequiredFields(requiredFields);
+    e.preventDefault();
+    var shouldShowPreloader = checkRequiredFields(document.querySelectorAll("[required]"));
 
     if (shouldShowPreloader) {
-        document.querySelector('form').classList.add('loading');
-        document.querySelector('.preloader-wrapper').setAttribute("style", "display:block;");
-        document.querySelector('pre').remove()
+        flash.innerHTML = "";
+        var repository = document.getElementById("repository").value;
+        var package = document.getElementById("package").value;
+        var name = document.getElementById("name").value;
+
+        var request = JSON.stringify({ repository: repository, package: package, name: name });
+        console.log(request)
+
+        socket.send(request);
+
+        modelCode.innerHTML = " ";
+        form.classList.add('loading');
+        preloader.setAttribute("style", "display:block;");
+        pre.setAttribute("style", "height:0;");
+
+    } else {
+        showError('Please fill out all form fields.')
     }
 }
