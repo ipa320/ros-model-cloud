@@ -59,6 +59,7 @@ def submit():
 
         for line in iter(extractor_process.stdout.readline, ''):
             eventlet.sleep(1)
+            # TODO: this broadcasts the message to all clients
             socketio.emit('run_event', {'data': line})
             print line
 

@@ -47,6 +47,7 @@ COPY ./haros_runner.sh /
 # Just for testing, can be removed
 COPY flaskr ./flaskr
 COPY ./wsgi.py .
+COPY requirements.txt .
 
 ENV HAROS_RUNNER /haros_runner.sh
 ENV MODEL_PATH /root/
