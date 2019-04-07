@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, render_template
 )
 
 import subprocess
@@ -54,6 +54,10 @@ def websocket(ws):
                 error_message = create_message('error_event', error)
                 ws.send(error_message)
             else:
+                # suppress the prompt for password (useful when the repository is misspelled)
+                # TODO: remove this and add an option to enter username and password?
+                os.environ['GIT_TERMINAL_PROMPT'] = '0'
+
                 shell_command = '/bin/bash ' + os.environ['HAROS_RUNNER'] + ' ' + repository + ' ' + package + ' ' + name
 
                 extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
@@ -72,14 +76,22 @@ def websocket(ws):
                 try:
                     repo_name = get_repo_basename(repository)
                     shutil.rmtree(os.path.join(os.environ['HAROS_SRC'], repo_name))
+                except OSError or IOError:
+                    pass
+
+                try:
                     model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'))
                     model = model_file.read()
-                except:
-                    error_message = create_message('error_event', 'There was a problem with the model generation')
+                except OSError or IOError:
+                    error_message = create_message('error_event', 'There was a problem with the model generation.')
                     ws.send(error_message)
 
-                model_message = create_message('model_event', model)
-                ws.send(model_message)
+                if model:
+                    model_message = create_message('model_event', model)
+                    ws.send(model_message)
+                else:
+                    error_message = create_message('error_event', 'There was a problem with the model generation')
+                    ws.send(error_message)
 
 
 @bp.route('/', methods=['GET'])

@@ -59,12 +59,15 @@ submitButton.onclick = function (e) {
                 form.classList.add('loading');
                 preloader.setAttribute("style", "display:block;");
                 pre.setAttribute("style", "height:0;");
+                flash.innerHTML = "";
+                log.innerHTML = "";
 
                 socket.addEventListener('error', function () {
                     showError('There was an error connecting to the server');
                     stopLoading();
                     socket.close();
                 });
+
 
                 socket.addEventListener('message', function (event) {
                     var message = JSON.parse(event.data);
@@ -75,7 +78,7 @@ submitButton.onclick = function (e) {
                         span.appendChild(content);
                         log.appendChild(span);
                         log.appendChild(document.createElement("br"));
-                        flash.innerHTML = "";
+
 
                     } else if (message.type === 'model_event') {
                         var model = message.data;
