@@ -7,6 +7,8 @@ import shlex
 import shutil
 import os
 import json
+import git
+from git import GitCommandError
 
 
 bp = Blueprint('extractor', __name__)
@@ -26,8 +28,19 @@ def get_repo_basename(repository):
     return repo_name
 
 
+# create a message that should be sent via the websocket connection
 def create_message(message_type, message):
     return json.dumps({'type': message_type, 'data': message})
+
+
+# use git ls-remote to check if the link to the repository is valid and the repository is public
+def check_remote_repository(repository):
+    try:
+        g = git.cmd.Git()
+        g.ls_remote(repository)
+        return True
+    except GitCommandError:
+        return False
 
 
 @ws.route('/')
@@ -49,15 +62,13 @@ def websocket(ws):
                 error = 'Please enter a valid package name.'
             elif not name:
                 error = 'Please enter a valid node name.'
+            elif not check_remote_repository(repository):
+                error = 'The repository could not be found. Please ensure that the link is valid and the repository is public'
 
             if error:
                 error_message = create_message('error_event', error)
                 ws.send(error_message)
             else:
-                # suppress the prompt for password (useful when the repository is misspelled)
-                # TODO: remove this and add an option to enter username and password?
-                os.environ['GIT_TERMINAL_PROMPT'] = '0'
-
                 shell_command = '/bin/bash ' + os.environ['HAROS_RUNNER'] + ' ' + repository + ' ' + package + ' ' + name
 
                 extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,

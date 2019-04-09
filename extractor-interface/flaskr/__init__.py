@@ -26,7 +26,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    async_mode = 'eventlet'
+    os.environ['GIT_TERMINAL_PROMPT'] = '0'
     from . import extractor
     app.register_blueprint(extractor.bp)
 
