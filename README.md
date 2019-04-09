@@ -2,6 +2,12 @@
 
 ## Start the flask app
 
+Install virtualenv
+
+```shell
+     sudo apt-get install python-virtualenv
+```
+
 Create venv and install the requirements:
 
 ```shell
@@ -20,4 +26,4 @@ Run the app:
      gunicorn -k flask_sockets.worker wsgi:app
 ```
 
-Open http://127.0.0.1:5000 in a browser.
+Open http://127.0.0.1:8000 in a browser.
