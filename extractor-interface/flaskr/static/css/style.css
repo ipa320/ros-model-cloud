@@ -1,22 +1,26 @@
 .content {
-    margin: 0 auto;
+    margin: 0 auto 50px;
     padding: 1em 4em;
-    margin-bottom: 50px;
     line-height: 1.6em;
 }
 
-input[type="submit"] {
+button[type="submit"] {
     margin-top: 1em;
 }
 
+.float-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .header {
-     margin: 0 0 2em;
-     color: #333;
-     padding: 2.5em 2em 1em;
-     border-bottom: 1px solid #eee;
-     display: flex;
-     align-items: center;
-     justify-content: space-around;
+    margin: 0 0 2em;
+    color: #333;
+    padding: 2.5em 2em 1em;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
 }
 
 img {
@@ -44,9 +48,9 @@ img {
 }
 
 .header h1 {
-   margin: 0.2em 1em;
-   font-size: 2em;
-   font-weight: 400;
+    margin: 0.2em 1em;
+    font-size: 2em;
+    font-weight: 400;
 }
 
 .log {

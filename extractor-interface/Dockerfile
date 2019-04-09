@@ -20,6 +20,10 @@ RUN pip install bonsai-code
 
 RUN apt-get update && apt-get install -y ros-kinetic-desktop
 
+# Web app requirements
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 SHELL ["bash", "-c"]
 
 RUN mkdir -p ~/haros/src
@@ -44,15 +48,15 @@ COPY ./ros_model_extractor.py /
 
 COPY ./haros_runner.sh /
 
-# Just for testing, can be removed
+
+
+
 COPY flaskr ./flaskr
 COPY ./wsgi.py .
-COPY requirements.txt .
 
 ENV HAROS_RUNNER /haros_runner.sh
 ENV MODEL_PATH /root/
 ENV HAROS_SRC /root/haros/src
-RUN pip install -r requirements.txt
 
 EXPOSE 5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "-k", "flask_sockets.worker", "wsgi:app"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:5000", "-k", "flask_sockets.worker", "wsgi:app"]

@@ -1,105 +1,132 @@
-var submitButton = document.querySelector('button[type="submit"]');
-var form = document.querySelector('form');
-var preloader = document.querySelector('.preloader-wrapper');
-var modelCode = document.getElementById("model-code");
-var pre = document.querySelector("pre");
-var log = document.querySelector(".log");
-var flash = document.querySelector('.flash');
+requirejs(["formControl", "loaderControl", "websocket"], function (formControl, loaderControl, websocket) {
 
-function checkRequiredFields(fields) {
-    var shouldShowPreloader = true;
-    fields.forEach(function (field) {
-        if (field.value === '') {
-            shouldShowPreloader = false
-        }
-    });
+    var submitButton = document.querySelector('button[type="submit"]');
+    var modelCode = document.getElementById("model-code");
+    var pre = document.querySelector("pre");
+    var log = document.querySelector(".log");
+    var commonError = document.getElementById("error-common");
+    var formsWrapper = document.getElementById("forms-wrapper");
+    var addFormButton = document.getElementById('add-form');
 
-    return shouldShowPreloader;
-}
-
-function stopLoading() {
-    form.classList.remove('loading');
-    preloader.setAttribute("style", "display:none;");
-}
-
-function showError(errorMessage) {
-    var errorTextNode = document.createTextNode(errorMessage);
-    flash.appendChild(errorTextNode);
-}
-
-function connect() {
-    return new Promise(function (resolve, reject) {
-        var socket = new WebSocket('ws://' + document.domain + ':' + location.port);
-        socket.onopen = function () {
-            resolve(socket);
-        };
-        socket.onerror = function (err) {
-            reject(false);
-        };
-    });
-}
-
-submitButton.onclick = function (e) {
-    e.preventDefault();
-    var shouldShowPreloader = checkRequiredFields(document.querySelectorAll("[required]"));
-
-    if (shouldShowPreloader) {
-        flash.innerHTML = "";
-
-        var repository = document.getElementById("repository").value;
-        var package = document.getElementById("package").value;
-        var name = document.getElementById("name").value;
-
-        var request = JSON.stringify({ repository: repository, package: package, name: name });
-        connect()
-            .then(function (socket) {
-                socket.send(request);
-
-                modelCode.innerHTML = " ";
-                form.classList.add('loading');
-                preloader.setAttribute("style", "display:block;");
-                pre.setAttribute("style", "height:0;");
-                flash.innerHTML = "";
-                log.innerHTML = "";
-
-                socket.addEventListener('error', function () {
-                    showError('There was an error connecting to the server');
-                    stopLoading();
-                    socket.close();
-                });
-
-
-                socket.addEventListener('message', function (event) {
-                    var message = JSON.parse(event.data);
-
-                    if (message.type === 'run_event') {
-                        var span = document.createElement("span");
-                        var content = document.createTextNode(message.data);
-                        span.appendChild(content);
-                        log.appendChild(span);
-                        log.appendChild(document.createElement("br"));
-
-
-                    } else if (message.type === 'model_event') {
-                        var model = message.data;
-                        stopLoading();
-                        modelTextNode = document.createTextNode(model);
-                        modelCode.appendChild(modelTextNode);
-                        pre.setAttribute("style", "height:auto;")
-                        log.innerHTML = "";
-                        flash.innerHTML = "";
-                        socket.close();
-
-                    } else if (message.type === 'error_event') {
-                        showError(message.data);
-                        stopLoading();
-                        socket.close();
-                    }
-                });
-            }).catch(function () {
-                showError('There was an error connecting to the server')
-            });
-    } else {
-        showError('Please fill out all form fields.')
+    function showCommonError(errorMessage) {
+        var errorTextNode = document.createTextNode(errorMessage);
+        commonError.appendChild(errorTextNode);
     }
-}
+
+    // incremented when new forms are added
+    var formIdx = 0;
+
+    // Add the initial form
+    formControl.addForm(formsWrapper, formIdx);
+
+    // Add additional ones
+    addFormButton.onclick = function () {
+        formIdx++;
+        formControl.addForm(formsWrapper, formIdx);
+    };
+
+    function errorHandler(){
+        showCommonError('There was an error connecting to the server');
+                        loaderControl.stopLoading();
+    }
+
+    function errorMessageHandler(errors) {
+        for (var key in errors) {
+            if (errors.hasOwnProperty(key)) {
+                if (errors[key.toString()]) {
+                    var flashContainer = document.getElementById(key).querySelector('.flash');
+                    var errorTextNode = document.createTextNode(errors[key]);
+                    flashContainer.appendChild(errorTextNode);
+                }
+            }
+        }
+        loaderControl.stopLoading();
+
+    }
+
+    function runMessageHandler(logString) {
+        var span = document.createElement("span");
+        var content = document.createTextNode(logString);
+        span.appendChild(content);
+        log.appendChild(span);
+        log.appendChild(document.createElement("br"));
+    }
+
+    function modelMessageHandler(models) {
+        console.log(models);
+        var modelsSorted = Object.keys(models).sort(function (a, b) {
+            return a - b
+        });
+
+        var modelText = "";
+        var showLogs = false;
+
+        for (var modelKey in modelsSorted) {
+            if (models.hasOwnProperty(modelKey)) {
+                if (models[modelKey.toString()]) {
+                    modelText += models[modelKey];
+                    modelText += '\n'
+                } else {
+                    // keeps the logs if at least one model had an error
+                    showLogs = true;
+                }
+            }
+        }
+
+        loaderControl.stopLoading();
+
+        if (modelText) {
+            var modelTextNode = document.createTextNode(modelText);
+            modelCode.appendChild(modelTextNode);
+            pre.setAttribute("style", "height:auto;");
+            if (!showLogs) {
+                log.innerHTML = "";
+            }
+        }
+    }
+
+    submitButton.onclick = function (e) {
+        e.preventDefault();
+
+        var errorBlocks = document.querySelectorAll('.flash');
+        errorBlocks.forEach(function (errorBlock) {
+            errorBlock.innerHTML = "";
+        });
+
+        var forms = document.querySelectorAll('form');
+
+        if (forms.length === 0) {
+            return showCommonError('Please add at least one node.')
+        }
+
+        var shouldSendRequest = formControl.checkRequiredFields();
+
+        if (shouldSendRequest) {
+            var values = {};
+
+            forms.forEach(function (form) {
+                var repository = form.querySelector('input[name="repository"]').value;
+                var packageName = form.querySelector('input[name="package"]').value;
+                var name = form.querySelector('input[name="name"]').value;
+
+                values[form.id] = { repository: repository, package: packageName, name: name };
+            });
+
+            var messageHandlers = { errorMessageHandler: errorMessageHandler, modelMessageHandler: modelMessageHandler, runMessageHandler: runMessageHandler};
+
+            websocket.connect(messageHandlers, errorHandler, values)
+                .then(function () {
+                    loaderControl.startLoading();
+                    modelCode.innerHTML = " ";
+                    pre.setAttribute("style", "height:0;");
+                    log.innerHTML = "";               
+                }).catch(function (err) {
+                    console.log(err);
+                    showCommonError('There was an error connecting to the server')
+                });
+        } else {
+            showCommonError('Please fill out all form fields.')
+        }
+    }
+});
+

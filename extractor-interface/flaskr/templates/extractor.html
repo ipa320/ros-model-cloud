@@ -2,57 +2,36 @@
 
 {% block header %}
 <h1>{% block title %}ROS Model Extractor{% endblock %}</h1>
-<img src="{{ url_for('static', filename='img/SeRoNet_Logo.png') }}">
+<img src="{{ url_for('static', filename='img/SeRoNet_Logo.png') }}" alt="SeRoNet logo">
 {% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col s4">
+    <div class="col s3">
         <div class="row">
-            <div class="flash"></div>
+            <div class="flash" id="error-common"></div>
         </div>
         <div class="row">
-
             {% include 'preloader.html' %}
+            <div id="forms-wrapper">
+            </div>
 
-            <form>
-                <div class="row">
-                    <div class="input-field col s12">
-                        <input name="repository" id="repository" value="{{ request.form['repository']}}"
-                               class="validate"
-                               type="text"
-                               required
-                        >
-                        <label for="repository">Git Repository</label>
-                    </div>
+            <div class="row">
+                <div class="col s12 float-right">
+                    <a class="btn btn-small" id="add-form">
+                        <i class="material-icons">add</i>
+                    </a>
                 </div>
+            </div>
 
-                <div class="row">
-                    <div class="input-field col s12">
-                        <input name="package" id="package" value="{{ request.form['package']}}" class="validate"
-                               type="text" required
-                        >
-                        <label for="package">Package</label>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="input-field col s12">
-                        <input name="name" id="name" value="{{ request.form['name']}}" class="validate" type="text"
-                               required
-                        >
-                        <label for="name">Node</label>
-                    </div>
-                </div>
-
+            <div class="row">
                 <button class="btn waves-effect waves-light" type="submit" name="action">Submit
                     <i class="material-icons right">send</i>
                 </button>
-
-            </form>
+            </div>
         </div>
     </div>
-    <div class="col s7">
+    <div class="col s8 offset-s1">
         <pre>
             <code id="model-code">
             </code>

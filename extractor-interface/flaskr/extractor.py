@@ -15,6 +15,7 @@ bp = Blueprint('extractor', __name__)
 ws = Blueprint(r'extractor_ws', __name__)
 
 
+# get the name of a git repository
 def get_repo_basename(repository):
     repo_name = repository[repository.rfind('/') + 1:]
 
@@ -43,66 +44,85 @@ def check_remote_repository(repository):
         return False
 
 
+# check if some of the fields are empty and if the repository is available
+def validate_form_fields(repository, package, name):
+    error = None
+
+    if not repository or not package or not name:
+        error = 'Please fill out all form fields.'
+    elif not check_remote_repository(repository):
+        error = 'The repository could not be found. ' \
+                'Please ensure that the link is valid and the repository is public'
+
+    return error
+
+
+def parse_values(fields):
+    repository = fields['repository']
+    package = fields['package']
+    name = fields['name']
+
+    return repository, package, name
+
+
 @ws.route('/')
 def websocket(ws):
     while not ws.closed:
         message = ws.receive()
+        print message
         if message:
-            parsed = json.loads(message)
-            print parsed
+            request = json.loads(message)
 
-            repository = parsed['repository']
-            package = parsed['package']
-            name = parsed['name']
-            error = None
+            errors = {}
+            for key, value in request.iteritems():
+                repository, package, name = parse_values(value)
+                errors[key] = validate_form_fields(repository, package, name)
 
-            if not repository:
-                error = 'Please enter a valid repository name.'
-            elif not package:
-                error = 'Please enter a valid package name.'
-            elif not name:
-                error = 'Please enter a valid node name.'
-            elif not check_remote_repository(repository):
-                error = 'The repository could not be found. Please ensure that the link is valid and the repository is public'
-
-            if error:
-                error_message = create_message('error_event', error)
+            print errors
+            if any(error is not None for error in errors.itervalues()):
+                error_message = create_message('error_event', errors)
                 ws.send(error_message)
             else:
-                shell_command = '/bin/bash ' + os.environ['HAROS_RUNNER'] + ' ' + repository + ' ' + package + ' ' + name
+                errors = {}
+                models = {}
 
-                extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
-                                                     stderr=subprocess.STDOUT,
-                                                     bufsize=1)
+                for key, value in request.iteritems():
+                    repository, package, name = parse_values(value)
+                    shell_command = '/bin/bash ' + os.environ['HAROS_RUNNER'] + ' ' + repository + ' ' + package + ' ' + name
 
-                for line in iter(extractor_process.stdout.readline, ''):
-                    run_message = create_message('run_event', str(line))
-                    ws.send(run_message)
-                    print line
+                    extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
+                                                         stderr=subprocess.STDOUT,
+                                                         bufsize=1)
 
-                extractor_process.wait()
+                    for line in iter(extractor_process.stdout.readline, ''):
+                        run_message = create_message('run_event', str(line))
+                        ws.send(run_message)
+                        print line
 
-                model = None
+                    extractor_process.wait()
 
-                try:
-                    repo_name = get_repo_basename(repository)
-                    shutil.rmtree(os.path.join(os.environ['HAROS_SRC'], repo_name))
-                except OSError or IOError:
-                    pass
+                    current_model = None
 
-                try:
-                    model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'))
-                    model = model_file.read()
-                except OSError or IOError:
-                    error_message = create_message('error_event', 'There was a problem with the model generation.')
-                    ws.send(error_message)
+                    try:
+                        repo_name = get_repo_basename(repository)
+                        shutil.rmtree(os.path.join(os.environ['HAROS_SRC'], repo_name))
+                    except OSError or IOError:
+                        pass
 
-                if model:
-                    model_message = create_message('model_event', model)
-                    ws.send(model_message)
-                else:
-                    error_message = create_message('error_event', 'There was a problem with the model generation')
-                    ws.send(error_message)
+                    try:
+                        model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'))
+                        current_model = model_file.read()
+                        print 'reading'
+                    except OSError or IOError:
+                        errors[key] = 'There was a problem with the model generation.'
+
+                    models[key] = current_model
+
+                    if not current_model:
+                        errors[key] = 'There was a problem with the model generation.'
+
+                ws.send(create_message('model_event', models))
+                ws.send(create_message('error_event', errors))
 
 
 @bp.route('/', methods=['GET'])
