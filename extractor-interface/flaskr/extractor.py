@@ -106,14 +106,14 @@ def websocket(ws):
                     try:
                         repo_name = get_repo_basename(repository)
                         shutil.rmtree(os.path.join(os.environ['HAROS_SRC'], repo_name))
-                    except OSError or IOError:
+                    except (OSError, IOError), e:
                         pass
 
                     try:
-                        model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'))
+                        model_file = open(os.path.join(os.environ['MODEL_PATH'], name + '.ros'), 'r+')
                         current_model = model_file.read()
-                        print 'reading'
-                    except OSError or IOError:
+                        model_file.truncate(0)
+                    except (OSError, IOError), e:
                         errors[key] = 'There was a problem with the model generation.'
 
                     models[key] = current_model
