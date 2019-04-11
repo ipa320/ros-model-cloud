@@ -121,6 +121,18 @@ class RosExtractor():
                     print model_str
 
   def extract_primitives(self, node, gs, analysis, rosmodel, roscomponent, pkg_name, node_name, art_name):
+        for call in (CodeQuery(gs).all_calls.where_name("SimpleActionServer").get()):
+            name = analysis._extract_action(call)
+            action_type = analysis._extract_action_type(call)
+            act_server = action_server (name, action_type)
+            rosmodel.actsrvs.append(act_server)
+            roscomponent.add_interface(name,"actsrvs", pkg_name+"."+art_name+"."+node_name+"."+name)
+        for call in (CodeQuery(gs).all_calls.where_name("SimpleActionClient").get()):
+            name = analysis._extract_action(call)
+            action_type = analysis._extract_action_type(call)
+            act_client = action_client(name, action_type)
+            rosmodel.actcls.append(act_client)
+            roscomponent.add_interface(name,"actcls", pkg_name+"."+art_name+"."+node_name+"."+name)
         for call in (CodeQuery(gs).all_calls.where_name("advertise").where_result("ros::Publisher").get()):
             name = analysis._extract_topic(call)
             msg_type = analysis._extract_message_type(call)
@@ -166,6 +178,8 @@ class ros_model:
     self.subs = []
     self.srvsrvs = []
     self.srvcls = []
+    self.actsrvs = []
+    self.actcls = []
   def save_model(self):
     model_str = "PackageSet { package { \n"
     model_str = model_str+"  CatkinPackage "+self.package+" { "
@@ -211,6 +225,26 @@ class ros_model:
                 model_str = model_str+",\n"
             else:
                 model_str = model_str+"}\n"
+    if len(self.actsrvs) > 0:
+        model_str = model_str+"        actionserver {\n"
+        count = len(self.actsrvs)
+        for act in self.actsrvs:
+            model_str = model_str+"          ActionServer { name '"+act.name+"' action '"+act.action_type+"'}"
+            count = count -1
+            if count > 0:
+                model_str = model_str+",\n"
+            else:
+                model_str = model_str+"}\n"
+    if len(self.actcls) > 0:
+        model_str = model_str+"        actionclient {\n"
+        count = len(self.actcls)
+        for act in self.actcls:
+            model_str = model_str+"          ActionClient { name '"+act.name+"' action '"+act.action_type+"'}"
+            count = count -1
+            if count > 0:
+                model_str = model_str+",\n"
+            else:
+                model_str = model_str+"}\n"
     model_str = model_str + "}}}}}}"
     text_file = open(self.node+".ros", "w")
     text_file.write(model_str)
@@ -237,6 +271,16 @@ class service_client:
     self.name = name
     self.srv_type = srv_type.replace("/",".")
 
+class action_server:
+  def __init__(self, name, action_type):
+    self.name = name
+    self.action_type = action_type.replace("/",".")
+
+class action_client:
+  def __init__(self, name, action_type):
+    self.name = name
+    self.action_type = action_type.replace("/",".")
+
 class RosInterface:
   def __init__(self, name, ref):
     self.name = name
@@ -250,6 +294,8 @@ class ros_component:
     self.subs = []
     self.srvsrvs = []
     self.srvcls = []
+    self.actsrvs = []
+    self.actcls = []
   def add_interface(self, name, interface_type, ref):
     if interface_type == "pubs":
         self.pubs.append(RosInterface(name,ref))
@@ -259,6 +305,10 @@ class ros_component:
         self.srvsrvs.append(RosInterface(name,ref))
     if interface_type == "srvcls":
         self.srvcls.append(RosInterface(name,ref))
+    if interface_type == "actsrvs":
+        self.actsrvs.append(RosInterface(name,ref))
+    if interface_type == "actcls":
+        self.actcls.append(RosInterface(name,ref))
 
 class ros_system:
   def __init__(self, name):
@@ -278,6 +328,8 @@ class ros_system:
             subs = comp.subs
             srvsrvs = comp.srvsrvs
             srvcls = comp.srvcls
+            actsrvs = comp.actsrvs
+            actcls = comp.actcls
             if comp.ns is not None:
                 system_model_str+="        ComponentInterface { name '"+comp.name+"' NameSpace '"+comp.ns+"' \n" 
             else:
@@ -317,6 +369,26 @@ class ros_system:
                 count = len(srvcls)
                 for srv in srvcls:
                     system_model_str+="                RosServiceClient '"+srv.name+"' { RefClient '"+srv.ref+"'}"
+                    count = count -1
+                    if count > 0:
+                        system_model_str+=",\n"
+                    else:
+                        system_model_str+="}\n"
+            if len(actsrvs) > 0:
+                system_model_str+="            RosActionServers{\n"
+                count = len(actsrvs)
+                for act in actsrvs:
+                    system_model_str+="                RosActionServer '"+act.name+"' { RefServer '"+act.ref+"'}"
+                    count = count -1
+                    if count > 0:
+                        system_model_str+=",\n"
+                    else:
+                        system_model_str+="}\n"
+            if len(actcls) > 0:
+                system_model_str+="            RosActionClients{\n"
+                count = len(actcls)
+                for act in actcls:
+                    system_model_str+="                RosActionClient '"+act.name+"' { RefClient '"+act.ref+"'}"
                     count = count -1
                     if count > 0:
                         system_model_str+=",\n"
