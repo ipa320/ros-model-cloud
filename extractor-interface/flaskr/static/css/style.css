@@ -1,0 +1,60 @@
+.content {
+    margin: 0 auto 50px;
+    padding: 1em 4em;
+    line-height: 1.6em;
+}
+
+button[type="submit"] {
+    margin-top: 1em;
+}
+
+.float-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.header {
+    margin: 0 0 2em;
+    color: #333;
+    padding: 2.5em 2em 1em;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+img {
+    max-height: 100px;
+}
+
+.flash {
+    color: #b80303;
+    font-size: 1.2em;
+}
+
+.preloader-wrapper.active {
+    position: fixed;
+    top: 30%;
+    left: 15%;
+    display: none;
+}
+
+.show-preloader {
+    display: block;
+}
+
+.loading {
+    opacity: 0.5;
+}
+
+.header h1 {
+    margin: 0.2em 1em;
+    font-size: 2em;
+    font-weight: 400;
+}
+
+.log {
+    max-height: 70vh;
+    overflow-y: scroll;
+    padding-left: 5em;
+}
