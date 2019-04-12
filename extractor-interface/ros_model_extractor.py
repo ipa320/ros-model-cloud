@@ -93,28 +93,29 @@ class RosExtractor():
         bindir = os.path.join(ws, "build")
         #HAROS CMAKE PARSER
         parser = RosCMakeParser(srcdir, bindir, pkgs = [pkg])
-        parser.parse(os.path.join(pkg.path, "CMakeLists.txt"))
-        for target in parser.executables.itervalues():
-            if target.output_name == node_name:
-                for file_in in target.files:
-                    full_path = file_in
-                    relative_path = full_path.replace(pkg.path+"/","").rpartition("/")[0]
-                    file_name = full_path.rsplit('/', 1)[-1]
-                    source_file = SourceFile(file_name, relative_path , pkg)
-                    node.source_files.append(source_file)
-        parser = CppAstParser(workspace = ws)
-        node.source_tree = parser.global_scope
         model_str = ""
-        for sf in node.source_files:
-            if parser.parse(sf.path) is not None:
-                # ROS MODEL EXTRACT PRIMITIVES
-                rosmodel = ros_model(pkg.name, node_name, node_name)
-                roscomponent = ros_component(name, ns)
-                self.extract_primitives(node, parser.global_scope, analysis, rosmodel, roscomponent, pkg_name, node_name, name)
-                if rossystem is not None:
-                    rossystem.add_component(roscomponent)
-                # SAVE ROS MODEL
-                model_str = rosmodel.save_model()
+        if os.path.isfile(os.path.join(pkg.path, "CMakeLists.txt")):
+            parser.parse(os.path.join(pkg.path, "CMakeLists.txt"))
+            for target in parser.executables.itervalues():
+                if target.output_name == node_name:
+                    for file_in in target.files:
+                        full_path = file_in
+                        relative_path = full_path.replace(pkg.path+"/","").rpartition("/")[0]
+                        file_name = full_path.rsplit('/', 1)[-1]
+                        source_file = SourceFile(file_name, relative_path , pkg)
+                        node.source_files.append(source_file)
+            parser = CppAstParser(workspace = ws)
+            node.source_tree = parser.global_scope
+            for sf in node.source_files:
+                if parser.parse(sf.path) is not None:
+                    # ROS MODEL EXTRACT PRIMITIVES
+                    rosmodel = ros_model(pkg.name, node_name, node_name)
+                    roscomponent = ros_component(name, ns)
+                    self.extract_primitives(node, parser.global_scope, analysis, rosmodel, roscomponent, pkg_name, node_name, name)
+                    if rossystem is not None:
+                        rossystem.add_component(roscomponent)
+                    # SAVE ROS MODEL
+                    model_str = rosmodel.save_model()
         if self.args.output:
             print model_str
 
@@ -277,7 +278,7 @@ class ros_system:
             srvsrvs = comp.srvsrvs
             srvcls = comp.srvcls
             if comp.ns is not None:
-                system_model_str+="        ComponentInterface { name '"+comp.name+"' NameSpace '"+comp.ns+"' \n" 
+                system_model_str+="        ComponentInterface { name '"+str(comp.name)+"' NameSpace '"+str(comp.ns)+"' \n" 
             else:
                 system_model_str+="        ComponentInterface { name '"+comp.name+"' \n" 
             if len(pubs) > 0:
