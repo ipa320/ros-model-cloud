@@ -2,7 +2,6 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
 
     var submitButton = document.querySelector('button[type="submit"]');
     var modelCode = document.getElementById("model-code");
-    var pre = document.querySelector("pre");
     var log = document.querySelector(".log");
     var commonError = document.getElementById("error-common");
     var formsWrapper = document.getElementById("forms-wrapper");
@@ -25,9 +24,9 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
         formControl.addForm(formsWrapper, formIdx);
     };
 
-    function errorHandler(){
+    function errorHandler() {
         showCommonError('There was an error connecting to the server');
-                        loaderControl.stopLoading();
+        loaderControl.stopLoading();
     }
 
     function errorMessageHandler(errors) {
@@ -53,7 +52,6 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
     }
 
     function modelMessageHandler(models) {
-        console.log(models);
         var modelsSorted = Object.keys(models).sort(function (a, b) {
             return a - b
         });
@@ -61,9 +59,10 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
         var modelText = "";
         var showLogs = false;
 
-        for (var modelKey in modelsSorted) {
+        for (var i = 0; i < modelsSorted.length; i++) {
+            modelKey = modelsSorted[i];
             if (models.hasOwnProperty(modelKey)) {
-                if (models[modelKey.toString()]) {
+                if (models[modelKey]) {
                     modelText += models[modelKey];
                     modelText += '\n'
                 } else {
@@ -78,7 +77,6 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
         if (modelText) {
             var modelTextNode = document.createTextNode(modelText);
             modelCode.appendChild(modelTextNode);
-            pre.setAttribute("style", "height:auto;");
             if (!showLogs) {
                 log.innerHTML = "";
             }
@@ -112,14 +110,13 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
                 values[form.id] = { repository: repository, package: packageName, name: name };
             });
 
-            var messageHandlers = { errorMessageHandler: errorMessageHandler, modelMessageHandler: modelMessageHandler, runMessageHandler: runMessageHandler};
+            var messageHandlers = { errorMessageHandler: errorMessageHandler, modelMessageHandler: modelMessageHandler, runMessageHandler: runMessageHandler };
 
             websocket.connect(messageHandlers, errorHandler, values)
                 .then(function () {
                     loaderControl.startLoading();
-                    modelCode.innerHTML = " ";
-                    pre.setAttribute("style", "height:0;");
-                    log.innerHTML = "";               
+                    modelCode.innerHTML = "";
+                    log.innerHTML = "";
                 }).catch(function (err) {
                     console.log(err);
                     showCommonError('There was an error connecting to the server')
