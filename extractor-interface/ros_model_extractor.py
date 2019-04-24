@@ -21,7 +21,7 @@ import argparse
 import rospkg
 from haros.extractor import NodeExtractor
 from haros.metamodel import Node, Package, RosName, SourceFile
-from haros.launch_parser import LaunchParser, LaunchParserError, NodeTag
+from haros.launch_parser import LaunchParser, LaunchParserError, NodeTag, RemapTag
 from haros.cmake_parser import RosCMakeParser
 from bonsai.analysis import CodeQuery
 try:
@@ -70,18 +70,23 @@ class RosExtractor():
                     name = node.attributes["name"]
                     node_name = node.attributes["type"]
                     node_pkg = node.attributes["pkg"]
+                    args = node.attributes["args"]
+                    remaps = []
+                    for child in node.children:
+                        if isinstance(child,RemapTag):
+                            remaps.append(child)
                     try:
                         ns = node.attributes["ns"]
                     except:
                         ns=""
-                    self.extract_node(name,node_name,node_pkg,ns,ws,rossystem)
+                    self.extract_node(name,node_name,node_pkg,ns,ws,rossystem, remaps)
         except LaunchParserError as e:
             print("Parsing error in %s:\n%s",source.path, str(e))
         system_str = rossystem.save_model()
         if self.args.output:
             print system_str
 
-  def extract_node(self, name, node_name, pkg_name, ns, ws, rossystem):
+  def extract_node(self, name, node_name, pkg_name, ns, ws, rossystem, remaps):
         pkg = Package(pkg_name)
         rospack = rospkg.RosPack()
         pkg.path = rospack.get_path(pkg_name)
@@ -111,7 +116,7 @@ class RosExtractor():
                 if parser.parse(sf.path) is not None:
                     # ROS MODEL EXTRACT PRIMITIVES
                     rosmodel = ros_model(pkg.name, node_name, node_name)
-                    roscomponent = ros_component(name, ns)
+                    roscomponent = ros_component(name, ns, remaps)
                     self.extract_primitives(node, parser.global_scope, analysis, rosmodel, roscomponent, pkg_name, node_name, node_name)
                     # SAVE ROS MODEL
                     model_str = rosmodel.save_model()
@@ -139,7 +144,6 @@ class RosExtractor():
             if len(call.arguments) > 1:
                 name = analysis._extract_topic(call)
                 msg_type = analysis._extract_message_type(call)
-                queue_size = analysis._extract_queue_size(call)
                 pub = publisher(name, msg_type)
                 rosmodel.pubs.append(pub)
                 roscomponent.add_interface(name,"pubs", pkg_name+"."+art_name+"."+node_name+"."+name)
@@ -293,8 +297,9 @@ class RosInterface:
     self.ref = ref
 
 class ros_component:
-  def __init__(self, name, ns):
+  def __init__(self, name, ns, remaps):
     self.name = str(ns)+str(name)
+    self.remaps = remaps
     self.ns = ns
     self.pubs = []
     self.subs = []
@@ -303,6 +308,9 @@ class ros_component:
     self.actsrvs = []
     self.actcls = []
   def add_interface(self, name, interface_type, ref):
+    for remap in self.remaps:
+        if remap.attributes["from"] == name:
+            name = remap.attributes["to"]
     if interface_type == "pubs":
         self.pubs.append(RosInterface(name,ref))
     if interface_type == "subs":
