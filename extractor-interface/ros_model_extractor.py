@@ -85,6 +85,7 @@ class RosExtractor():
         pkg = Package(pkg_name)
         rospack = rospkg.RosPack()
         pkg.path = rospack.get_path(pkg_name)
+        roscomponent = None
         #HAROS NODE EXTRACTOR
         analysis = NodeExtractor(pkg, env=dict(os.environ), ws=ws ,node_cache=False, parse_nodes=True)
         node = Node(node_name, pkg, rosname=RosName(node_name))
@@ -93,58 +94,64 @@ class RosExtractor():
         bindir = os.path.join(ws, "build")
         #HAROS CMAKE PARSER
         parser = RosCMakeParser(srcdir, bindir, pkgs = [pkg])
-        parser.parse(os.path.join(pkg.path, "CMakeLists.txt"))
-        for target in parser.executables.itervalues():
-            if target.output_name == node_name:
-                for file_in in target.files:
-                    full_path = file_in
-                    relative_path = full_path.replace(pkg.path+"/","").rpartition("/")[0]
-                    file_name = full_path.rsplit('/', 1)[-1]
-                    source_file = SourceFile(file_name, relative_path , pkg)
-                    node.source_files.append(source_file)
-        parser = CppAstParser(workspace = ws)
-        node.source_tree = parser.global_scope
         model_str = ""
-        for sf in node.source_files:
-            if parser.parse(sf.path) is not None:
-                # ROS MODEL EXTRACT PRIMITIVES
-                rosmodel = ros_model(pkg.name, node_name, node_name)
-                roscomponent = ros_component(name, ns)
-                self.extract_primitives(node, parser.global_scope, analysis, rosmodel, roscomponent, pkg_name, node_name, name)
-                if rossystem is not None:
-                    rossystem.add_component(roscomponent)
-                # SAVE ROS MODEL
-                model_str = rosmodel.save_model()
+        if os.path.isfile(os.path.join(pkg.path, "CMakeLists.txt")):
+            parser.parse(os.path.join(pkg.path, "CMakeLists.txt"))
+            for target in parser.executables.itervalues():
+                if target.output_name == node_name:
+                    for file_in in target.files:
+                        full_path = file_in
+                        relative_path = full_path.replace(pkg.path+"/","").rpartition("/")[0]
+                        file_name = full_path.rsplit('/', 1)[-1]
+                        source_file = SourceFile(file_name, relative_path , pkg)
+                        node.source_files.append(source_file)
+            parser = CppAstParser(workspace = ws)
+            node.source_tree = parser.global_scope
+            for sf in node.source_files:
+                if parser.parse(sf.path) is not None:
+                    # ROS MODEL EXTRACT PRIMITIVES
+                    rosmodel = ros_model(pkg.name, node_name, node_name)
+                    roscomponent = ros_component(name, ns)
+                    self.extract_primitives(node, parser.global_scope, analysis, rosmodel, roscomponent, pkg_name, node_name, node_name)
+                    # SAVE ROS MODEL
+                    model_str = rosmodel.save_model()
+            if rossystem is not None and roscomponent is not None:
+                rossystem.add_component(roscomponent)
         if self.args.output:
             print model_str
 
   def extract_primitives(self, node, gs, analysis, rosmodel, roscomponent, pkg_name, node_name, art_name):
+        
         for call in (CodeQuery(gs).all_calls.where_name("advertise").where_result("ros::Publisher").get()):
-            name = analysis._extract_topic(call)
-            msg_type = analysis._extract_message_type(call)
-            queue_size = analysis._extract_queue_size(call)
-            pub = publisher(name, msg_type)
-            rosmodel.pubs.append(pub)
-            roscomponent.add_interface(name,"pubs", pkg_name+"."+art_name+"."+node_name+"."+name)
+            if len(call.arguments) > 1:
+                name = analysis._extract_topic(call)
+                msg_type = analysis._extract_message_type(call)
+                queue_size = analysis._extract_queue_size(call)
+                pub = publisher(name, msg_type)
+                rosmodel.pubs.append(pub)
+                roscomponent.add_interface(name,"pubs", pkg_name+"."+art_name+"."+node_name+"."+name)
         for call in (CodeQuery(gs).all_calls.where_name("subscribe").where_result("ros::Subscriber").get()):
-            name = analysis._extract_topic(call)
-            msg_type = analysis._extract_message_type(call)
-            queue_size = analysis._extract_queue_size(call)
-            sub = subscriber(name, msg_type)
-            rosmodel.subs.append(sub)
-            roscomponent.add_interface(name,"subs", pkg_name+"."+art_name+"."+node_name+"."+name)
+            if len(call.arguments) > 1:
+                name = analysis._extract_topic(call)
+                msg_type = analysis._extract_message_type(call)
+                queue_size = analysis._extract_queue_size(call)
+                sub = subscriber(name, msg_type)
+                rosmodel.subs.append(sub)
+                roscomponent.add_interface(name,"subs", pkg_name+"."+art_name+"."+node_name+"."+name)
         for call in (CodeQuery(gs).all_calls.where_name("advertiseService").where_result("ros::ServiceServer").get()):
-            name = analysis._extract_topic(call)
-            srv_type = analysis._extract_message_type(call)
-            srv_server = service_server(name, srv_type)
-            rosmodel.srvsrvs.append(srv_server)
-            roscomponent.add_interface(name,"srvsrvs", pkg_name+"."+art_name+"."+node_name+"."+name)
+            if len(call.arguments) > 1:
+                name = analysis._extract_topic(call)
+                srv_type = analysis._extract_message_type(call)
+                srv_server = service_server(name, srv_type)
+                rosmodel.srvsrvs.append(srv_server)
+                roscomponent.add_interface(name,"srvsrvs", pkg_name+"."+art_name+"."+node_name+"."+name)
         for call in (CodeQuery(gs).all_calls.where_name("serviceClient").where_result("ros::ServiceClient").get()):
-            name = analysis._extract_topic(call)
-            srv_type = analysis._extract_message_type(call)
-            srv_client = service_client(name, srv_type)
-            rosmodel.srvcls.append(srv_client)
-            roscomponent.add_interface(name,"srvcls", pkg_name+"."+art_name+"."+node_name+"."+name)
+            if len(call.arguments) > 1:
+                name = analysis._extract_topic(call)
+                srv_type = analysis._extract_message_type(call)
+                srv_client = service_client(name, srv_type)
+                rosmodel.srvcls.append(srv_client)
+                roscomponent.add_interface(name,"srvcls", pkg_name+"."+art_name+"."+node_name+"."+name)
   def parse_arg(self):
     parser = argparse.ArgumentParser()
     mutually_exclusive = parser.add_mutually_exclusive_group()
@@ -242,7 +249,7 @@ class RosInterface:
 
 class ros_component:
   def __init__(self, name, ns):
-    self.name = name
+    self.name = ns+name
     self.ns = ns
     self.pubs = []
     self.subs = []
@@ -277,14 +284,17 @@ class ros_system:
             srvsrvs = comp.srvsrvs
             srvcls = comp.srvcls
             if comp.ns is not None:
-                system_model_str+="        ComponentInterface { name '"+comp.name+"' NameSpace '"+comp.ns+"' \n" 
+                system_model_str+="        ComponentInterface { name '"+str(comp.name)+"' NameSpace '"+str(comp.ns)+"' \n" 
             else:
                 system_model_str+="        ComponentInterface { name '"+comp.name+"' \n" 
             if len(pubs) > 0:
                 system_model_str+="            RosPublishers{\n"
                 count = len(pubs)
                 for pub in pubs:
-                    system_model_str+="                RosPublisher '"+pub.name+"' { RefPublisher '"+pub.ref+"'}"
+                    if ((pub.name.startswith('/')) or (comp.ns is None)):
+                        system_model_str+="                RosPublisher '"+pub.name+"' { RefPublisher '"+pub.ref+"'}"
+                    else:
+                        system_model_str+="                RosPublisher '"+comp.ns+pub.name+"' { RefPublisher '"+pub.ref+"'}"
                     count = count -1
                     if count > 0:
                         system_model_str+=",\n"
@@ -294,7 +304,10 @@ class ros_system:
                 system_model_str+="            RosSubscribers{\n"
                 count = len(subs)
                 for sub in subs:
-                    system_model_str+="                RosSubscriber '"+sub.name+"' { RefSubscriber '"+sub.ref+"'}"
+                    if ((sub.name.startswith('/')) or (comp.ns is None)):
+                        system_model_str+="                RosSubscriber '"+sub.name+"' { RefSubscriber '"+sub.ref+"'}"
+                    else:
+                        system_model_str+="                RosSubscriber '"+comp.ns+sub.name+"' { RefSubscriber '"+sub.ref+"'}"
                     count = count -1
                     if count > 0:
                         system_model_str+=",\n"
@@ -304,7 +317,10 @@ class ros_system:
                 system_model_str+="            RosSrvServers{\n"
                 count = len(srvsrvs)
                 for srv in srvsrvs:
-                    system_model_str+="                RosServiceServer '"+srv.name+"' { RefServer '"+srv.ref+"'}"
+                    if ((srv.name.startswith('/')) or (comp.ns is None)):
+                        system_model_str+="                RosServiceServer '"+srv.name+"' { RefServer '"+srv.ref+"'}"
+                    else:
+                        system_model_str+="                RosServiceServer '"+comp.ns+srv.name+"' { RefServer '"+srv.ref+"'}"
                     count = count -1
                     if count > 0:
                         system_model_str+=",\n"
@@ -314,17 +330,20 @@ class ros_system:
                 system_model_str+="            RosSrvClients{\n"
                 count = len(srvcls)
                 for srv in srvcls:
-                    system_model_str+="                RosServiceClient '"+srv.name+"' { RefClient '"+srv.ref+"'}"
+                    if ((srv.name.startswith('/')) or (comp.ns is None)):
+                        system_model_str+="                RosServiceClient '"+srv.name+"' { RefClient '"+srv.ref+"'}"
+                    else:
+                        system_model_str+="                RosServiceClient '"+comp.ns+srv.name+"' { RefClient '"+srv.ref+"'}"
                     count = count -1
                     if count > 0:
                         system_model_str+=",\n"
                     else:
                         system_model_str+="}\n"
-        cout_c = cout_c -1
-        if cout_c > 0:
-            system_model_str+="},\n"
-        else:
-            system_model_str+="}\n"
+            cout_c = cout_c -1
+            if cout_c > 0:
+                system_model_str+="},\n"
+            else:
+                system_model_str+="}\n"
         system_model_str+=")"
     system_model_str+="}"
     text_file = open(self.name+".rossystem", "w")
