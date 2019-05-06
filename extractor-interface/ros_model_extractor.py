@@ -77,7 +77,7 @@ class RosExtractor():
                     self.extract_node(name,node_name,node_pkg,ns,ws,rossystem)
         except LaunchParserError as e:
             print("Parsing error in %s:\n%s",source.path, str(e))
-        system_str = rossystem.save_model()
+        system_str = rossystem.save_model(self.args.model_path)
         if self.args.output:
             print system_str
 
@@ -114,7 +114,7 @@ class RosExtractor():
                     roscomponent = ros_component(name, ns)
                     self.extract_primitives(node, parser.global_scope, analysis, rosmodel, roscomponent, pkg_name, node_name, node_name)
                     # SAVE ROS MODEL
-                    model_str = rosmodel.save_model()
+                    model_str = rosmodel.save_model(self.args.model_path)
             if rossystem is not None and roscomponent is not None:
                 rossystem.add_component(roscomponent)
         if self.args.output:
@@ -157,6 +157,9 @@ class RosExtractor():
     mutually_exclusive = parser.add_mutually_exclusive_group()
     mutually_exclusive.add_argument('--node', '-n', help="node analyse", action='store_true')
     mutually_exclusive.add_argument('--launch', '-l', help="launch analyse", action='store_true')
+    parser.add_argument('--model-path', help='path to the folder in which the model files should be saved',
+                        default='./',
+                        nargs='?', const='./')
     parser.add_argument('--output', help='print the model output')
     parser.add_argument('--package', required=True, dest='package_name')
     parser.add_argument('--name', required=True, dest='name')
@@ -171,7 +174,7 @@ class ros_model:
     self.subs = []
     self.srvsrvs = []
     self.srvcls = []
-  def save_model(self):
+  def save_model(self, model_path):
     model_str = "PackageSet { package { \n"
     model_str = model_str+"  CatkinPackage "+self.package+" { "
     model_str = model_str+"artifact {\n    Artifact "+self.artifact+" {\n"
@@ -217,7 +220,7 @@ class ros_model:
             else:
                 model_str = model_str+"}\n"
     model_str = model_str + "}}}}}}"
-    text_file = open(self.node+".ros", "w")
+    text_file = open(os.path.join(model_path, self.node+".ros"), "w")
     text_file.write(model_str)
     text_file.close()
     return model_str
@@ -273,7 +276,7 @@ class ros_system:
   def add_component(self, component):
     self.components.append(component)
 
-  def save_model(self):
+  def save_model(self, model_path):
     system_model_str = "RosSystem { Name "+self.name+"\n"
     if len(self.components)>0:
         cout_c = len(self.components)
@@ -346,7 +349,7 @@ class ros_system:
                 system_model_str+="}\n"
         system_model_str+=")"
     system_model_str+="}"
-    text_file = open(self.name+".rossystem", "w")
+    text_file = open(os.path.join(model_path, self.name+".rossystem"), "w")
     text_file.write(system_model_str)
     text_file.close()
     return system_model_str
