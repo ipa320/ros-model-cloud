@@ -45,31 +45,28 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
 
     function runMessageHandler(logString) {
         var span = document.createElement("span");
-        var content = document.createTextNode(logString);
+        var content = document.createTextNode(logString.message);
         span.appendChild(content);
         log.appendChild(span);
         log.appendChild(document.createElement("br"));
     }
 
     function modelMessageHandler(models) {
-        var modelsSorted = Object.keys(models).sort(function (a, b) {
-            return a - b
-        });
+
+        console.log(models);
 
         var modelText = "";
         var showLogs = false;
 
-        for (var i = 0; i < modelsSorted.length; i++) {
-            modelKey = modelsSorted[i];
-            if (models.hasOwnProperty(modelKey)) {
-                if (models[modelKey]) {
-                    modelText += models[modelKey];
+        for (var i = 0; i < models.length; i++) {
+            model = models[i];
+            if (model.message.model) {
+                    modelText += model.message.model;
                     modelText += '\n'
                 } else {
                     // keeps the logs if at least one model had an error
                     showLogs = true;
                 }
-            }
         }
 
         loaderControl.stopLoading();
@@ -100,14 +97,14 @@ requirejs(["formControl", "loaderControl", "websocket"], function (formControl, 
         var shouldSendRequest = formControl.checkRequiredFields();
 
         if (shouldSendRequest) {
-            var values = {};
+            var values = [];
 
             forms.forEach(function (form) {
                 var repository = form.querySelector('input[name="repository"]').value;
                 var packageName = form.querySelector('input[name="package"]').value;
                 var name = form.querySelector('input[name="name"]').value;
 
-                values[form.id] = { repository: repository, package: packageName, name: name };
+                values.push({ repository: repository, package: packageName, name: name, id: cuid() });
             });
 
             var messageHandlers = { errorMessageHandler: errorMessageHandler, modelMessageHandler: modelMessageHandler, runMessageHandler: runMessageHandler };
