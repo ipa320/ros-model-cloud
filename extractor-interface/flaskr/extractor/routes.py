@@ -6,8 +6,8 @@ from io import BytesIO
 from flask import render_template, send_file, request
 
 from flaskr.extractor import bp, ws
-from flaskr.extractor.extractors import NodeExtractorRunner
 from flaskr.extractor.errors import ExtractorInvalidUsage
+from flaskr.extractor.extractors import NodeExtractorRunner
 
 
 @bp.route('/', methods=['GET'])
@@ -22,9 +22,9 @@ def handle_invalid_usage(error):
 
     return response
 
+
 @bp.route('/download')
 def download_file():
-
     memory_file = BytesIO()
 
     if not request.args:
@@ -40,46 +40,44 @@ def download_file():
             except OSError:
                 raise ExtractorInvalidUsage.file_not_found()
     memory_file.seek(0)
-
     return send_file(memory_file, as_attachment=True, attachment_filename='ros-models.zip')
 
 
 @ws.route('/')
 def websocket(ws):
-
     while not ws.closed:
         message = ws.receive()
-        print message
-        if message: # if the message is None, it means that the connection was closed by the client
-            if isinstance(message, basestring):
-                parsed_message = json.loads(message)
-                extractor_runners = []
-                for request in parsed_message:
-                    runner = NodeExtractorRunner(request['name'], request['repository'], request['package'],
-                                                 request['id'])
-                    extractor_runners.append(runner)
 
-                validation_errors = []
-                for runner in extractor_runners:
-                    error = runner.validate()
-                    if error:
-                        validation_errors.append(error['data'])
+        # if the message is None, it means that the connection has been closed by the client
+        if message is not None:
+            parsed_message = json.loads(message)
+            extractor_runners = []
+            for request in parsed_message:
+                print request
+                runner = NodeExtractorRunner(**request)
+                extractor_runners.append(runner)
 
-                if validation_errors:
-                    ws.send(json.dumps({'type': 'error_event', 'data': validation_errors}))
-                    return
+            validation_errors = []
+            for runner in extractor_runners:
+                error = runner.validate()
+                if error:
+                    validation_errors.append(error['data'])
 
-                runner_errors = []
-                models = []
+            if validation_errors:
+                ws.send(json.dumps({'type': 'error_event', 'data': validation_errors}))
+                return
 
-                for runner in extractor_runners:
-                    for message in runner.run_analysis():
-                        if message['type'] == 'run_event':
-                            ws.send(json.dumps(message))
-                        elif message['type'] == 'model_event':
-                            models.append(message['data'])
-                        elif message['type'] == 'error_event':
-                            runner_errors.append(message['data'])
+            runner_errors = []
+            models = []
 
-                ws.send(json.dumps({'type': 'model_event', 'data': models}))
-                ws.send(json.dumps({'type': 'error_event', 'data': runner_errors}))
+            for runner in extractor_runners:
+                for message in runner.run_analysis():
+                    if message['type'] == 'run_event':
+                        ws.send(json.dumps(message))
+                    elif message['type'] == 'model_event':
+                        models.append(message['data'])
+                    elif message['type'] == 'error_event':
+                        runner_errors.append(message['data'])
+
+            ws.send(json.dumps({'type': 'model_event', 'data': models}))
+            ws.send(json.dumps({'type': 'error_event', 'data': runner_errors}))

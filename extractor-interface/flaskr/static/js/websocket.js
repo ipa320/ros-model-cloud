@@ -24,6 +24,7 @@ define(function () {
                     } else if (type === 'model_event') {
                         messageHandlers.modelMessageHandler(data);
                     } else if (type === 'error_event'){
+                        console.log(data);
                         messageHandlers.errorMessageHandler(data);
                         socket.close();
                     }

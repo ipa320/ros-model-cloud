@@ -11,10 +11,10 @@ class ExtractorRunner(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, repository, package, id_):
+    def __init__(self, repository, package, request_id):
         self.repository = repository
         self.package = package
-        self.id = id_
+        self.id = request_id
 
         self.model_path = os.path.join(os.environ['MODEL_PATH'], self.id)
         self.repo_path = os.path.join(os.environ['HAROS_SRC'], self._get_repo_basename())
@@ -71,8 +71,8 @@ class ExtractorRunner(object):
 
 class NodeExtractorRunner(ExtractorRunner):
 
-    def __init__(self, node, *args):
-        ExtractorRunner.__init__(self, *args)
+    def __init__(self, node, **kwargs):
+        ExtractorRunner.__init__(self, **kwargs)
         self.node = node
 
     def validate(self):
