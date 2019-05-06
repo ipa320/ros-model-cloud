@@ -249,7 +249,7 @@ class RosInterface:
 
 class ros_component:
   def __init__(self, name, ns):
-    self.name = ns+name
+    self.name = ns+name if ns else name
     self.ns = ns
     self.pubs = []
     self.subs = []
