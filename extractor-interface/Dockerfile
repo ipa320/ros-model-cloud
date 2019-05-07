@@ -48,9 +48,6 @@ COPY ./ros_model_extractor.py /
 
 COPY ./haros_runner.sh /
 
-
-
-
 COPY flaskr ./flaskr
 COPY ./wsgi.py .
 
@@ -58,5 +55,5 @@ ENV HAROS_RUNNER /haros_runner.sh
 ENV MODEL_PATH /root/
 ENV HAROS_SRC /root/haros/src
 
-EXPOSE 5000
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:5000", "-k", "flask_sockets.worker", "wsgi:app"]
+EXPOSE 4000
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]

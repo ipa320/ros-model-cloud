@@ -5,5 +5,5 @@ from geventwebsocket.handler import WebSocketHandler
 app = create_app()
 
 if __name__ == "__main__":
-    server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('', 4000), app, handler_class=WebSocketHandler)
     server.serve_forever()
