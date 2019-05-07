@@ -1,7 +1,7 @@
-from flaskr.errors import BaseInvalidUsage, template
+from flaskr.exceptions import BaseInvalidUsage, template
 
-FILE_NOT_FOUND = template('The file could not be found', 404)
-NO_FILES_SPECIFIED = template('No files were specified', 422)
+FILE_NOT_FOUND = template('FILE_NOT_FOUND', 404)
+NO_FILES_SPECIFIED = template('NO_FILES_SPECIFIED', 422)
 
 
 class ExtractorInvalidUsage(BaseInvalidUsage):

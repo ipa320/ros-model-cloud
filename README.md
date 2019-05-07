@@ -15,6 +15,9 @@ Create venv and install the requirements:
      virtualenv --python=python2.7 venv
      . venv/bin/activate
      pip install -r requirements.txt
+
+     npm install
+     npm run build
 ```
 
 Run the app:
@@ -22,7 +25,7 @@ Run the app:
 ```shell
      export MODEL_PATH={Path to the location where the file with the model is saved}
      export HAROS_RUNNER={Path to the location of the haros runner script}
-     export HAROS_SRC={Path to the HAROS src folder}
+     export HAROS_SRC={Path to the HAROS workspace src folder}
      gunicorn -k flask_sockets.worker wsgi:app
 ```
 

@@ -4,19 +4,29 @@ import shutil
 import subprocess
 from abc import ABCMeta, abstractmethod
 
-from git import GitCommandError, Repo, cmd
+
+from git import GitCommandError, cmd
 
 
 class ExtractorRunner(object):
     __metaclass__ = ABCMeta
 
+    # Possible errors
+    REPOSITORY_NOT_FOUND = 'REPOSITORY_NOT_FOUND'
+    INVALID_FIELDS = 'INVALID_FIELDS'
+    NO_MODEL_GENERATED = 'NO_MODEL_GENERATED'
+
     @abstractmethod
     def __init__(self, repository, package, request_id):
+        # Common for the launch & node extractors
         self.repository = repository
         self.package = package
         self.id = request_id
 
+        # Path where the model files are stored
         self.model_path = os.path.join(os.environ['MODEL_PATH'], self.id)
+
+        # Path to where the repository is cloned
         self.repo_path = os.path.join(os.environ['HAROS_SRC'], self._get_repo_basename())
 
     def _get_repo_basename(self):
@@ -43,27 +53,36 @@ class ExtractorRunner(object):
         except GitCommandError:
             return False
 
-    def _run_event(self, message):
-        return {'type': 'run_event', 'data': {'id': self.id, 'message': message}}
+    # Template for the events sent by the websocket
+    def _event_template(self, event_type, **kwargs):
+
+        from routes import ws_template
+
+        data = {'request_id': self.id}
+        data.update(kwargs)
+        return ws_template(event_type, data)
+
+    def _log_event(self, message):
+        return self._event_template('log', message=message)
 
     def _error_event(self, message):
-        return {'type': 'error_event', 'data': {'id': self.id, 'message': message}}
+        return self._event_template('error', message=message)
 
-    def _model_event(self, model, file_):
-        return {'type': 'model_event', 'data': {'id': self.id, 'message': {'model': model, 'file': file_}}}
+    def _model_event(self, model, file_name):
+        return self._event_template('model', model=model, file=file_name)
 
     # check if some of the fields are empty and if the repository is available
     @abstractmethod
     def validate(self):
         if not self.repository or not self.package:
-            return self._error_event('Please fill out all fields')
+            return self._error_event(self.INVALID_FIELDS)
 
         if not self._check_remote_repository():
-            return self._error_event(
-                'The repository could not be found. Please ensure that the link is valid and the repository is public')
+            return self._error_event(self.REPOSITORY_NOT_FOUND)
 
         return None
 
+    # should be implemented by both the node & the launch extractor
     @abstractmethod
     def run_analysis(self):
         pass
@@ -81,14 +100,19 @@ class NodeExtractorRunner(ExtractorRunner):
             return error
 
         if not self.node:
-            return self._error_event('Please fill out all fields')
+            return self._error_event(self.INVALID_FIELDS)
 
         return None
 
     def run_analysis(self):
 
+        # Create a folder where the files for the request should be stored
+        if os.path.exists(self.model_path):
+            shutil.rmtree(self.repo_path)
+
         os.mkdir(self.model_path)
 
+        # Start the Haros runner
         shell_command = '/bin/bash ' + \
                         os.environ['HAROS_RUNNER'] + ' ' + \
                         self.repository + ' ' + self.package + ' ' + self.node + ' node ' + self.model_path
@@ -97,25 +121,31 @@ class NodeExtractorRunner(ExtractorRunner):
                                              stderr=subprocess.STDOUT,
                                              bufsize=1)
 
+        # Send the logs
         for line in iter(extractor_process.stdout.readline, ''):
-            yield self._run_event(line)
+            yield self._log_event(line)
             print line
 
         extractor_process.wait()
 
         model = None
 
+        # Delete the source repository after the extraction is done
         try:
             shutil.rmtree(self.repo_path)
         except (OSError, IOError):
             pass
 
+        # Read the file with the model
         try:
             model_file = open(os.path.join(self.model_path, self.node + '.ros'), 'r+')
-            model = model_file.read()
-            yield self._model_event(model, self.node + '.ros')
+            model = model_file.read().strip()
+            model_file.close()
         except (OSError, IOError):
-            yield self._error_event('There was a problem with the model generation')
+            pass
 
-        if not model:
-            yield self._error_event('There was a problem with the model generation')
+        # Send the model or send an error if no model was found
+        if model:
+            yield self._model_event(model, self.node + '.ros')
+        else:
+            yield self._error_event(self.NO_MODEL_GENERATED)

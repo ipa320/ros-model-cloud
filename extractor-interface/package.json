@@ -1,0 +1,33 @@
+{
+  "name": "extractor-interface",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npm run build",
+    "build": "parcel build flaskr/static/src/index.js -d flaskr/static/dist --public-url /static/dist/",
+    "watch": "parcel watch flaskr/static/src/index.js -d flaskr/static/dist --public-url /static/dist/"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "cuid": "^2.1.6",
+    "materialize-css": "^1.0.0",
+    "preact": "^8.4.2",
+    "preact-compat": "^3.18.5",
+    "react-materialize": "^3.3.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-module-resolver": "^3.2.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-es2015-spread": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "parcel-bundler": "^1.12.3"
+  },
+  "alias": {
+    "react": "preact-compat",
+    "react-dom": "preact-compat"
+  }
+}

@@ -20,9 +20,8 @@ RUN pip install bonsai-code
 
 RUN apt-get update && apt-get install -y ros-kinetic-desktop
 
-# Web app requirements
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+&& apt-get install -y nodejs
 
 SHELL ["bash", "-c"]
 
@@ -31,8 +30,12 @@ RUN mkdir -p ~/haros/src
 # Set the working directory
 WORKDIR ~/haros
 
-# Copy the current directory contents into the container
-COPY . ~/haros
+# Web app requirements
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY package*.json ./
+RUN npm install
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-3.8/bin/clang++
 
@@ -45,11 +48,11 @@ RUN source /opt/ros/kinetic/setup.bash;\
  haros init
 
 COPY ./ros_model_extractor.py /
-
 COPY ./haros_runner.sh /
 
-COPY flaskr ./flaskr
-COPY ./wsgi.py .
+COPY . ./
+
+RUN npm run build
 
 ENV HAROS_RUNNER /haros_runner.sh
 ENV MODEL_PATH /root/

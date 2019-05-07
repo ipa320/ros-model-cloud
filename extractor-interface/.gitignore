@@ -1,6 +1,7 @@
 venv/
 
 .idea
+.vscode
 
 *.pyc
 __pycache__/
@@ -15,4 +16,7 @@ dist/
 build/
 *.egg-info/
 .env
+
+node_modules
+.cache
 
