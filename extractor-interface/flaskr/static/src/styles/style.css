@@ -16,7 +16,7 @@ button[type="submit"] {
 .header {
     margin: 0 0 2em;
     color: #333;
-    padding: 2.5em 2em 1em;
+    padding: 1.5em 1em 1em;
     border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
@@ -25,6 +25,7 @@ button[type="submit"] {
 
 img {
     max-height: 100px;
+    max-width: 250px;
 }
 
 .flash {
@@ -47,8 +48,8 @@ img {
 }
 
 .header h1 {
-    margin: 0.2em 1em;
-    font-size: 2em;
+    margin: 0;
+    font-size: 1.5em;
     font-weight: 400;
 }
 
@@ -68,4 +69,8 @@ img {
 
 .model-code h6 {
     font-weight: 700;
+}
+
+.row {
+    margin-bottom: 0;
 }
