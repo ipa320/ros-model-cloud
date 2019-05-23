@@ -4,6 +4,7 @@ FROM ros:kinetic-ros-base
 RUN apt-get update && apt-get install -y \
     cppcheck \
     cccc \
+    clang-3.8 \
     libclang-3.8-dev \
     python-pip \
     llvm-3.8-dev \
@@ -26,9 +27,10 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 SHELL ["bash", "-c"]
 
 RUN mkdir -p ~/haros/src
+RUN mkdir -p ~/extractor-interface
 
 # Set the working directory
-WORKDIR ~/haros
+WORKDIR /root/extractor-interface
 
 # Web app requirements
 COPY requirements.txt .
@@ -47,16 +49,13 @@ RUN source /opt/ros/kinetic/setup.bash;\
  source ~/haros/devel/setup.bash; \
  haros init
 
-COPY ./ros_model_extractor.py /
-COPY ./haros_runner.sh /
-
 COPY . ./
 
 RUN npm run build
 
-ENV HAROS_RUNNER /haros_runner.sh
+ENV HAROS_RUNNER /root/extractor-interface/haros_runner.sh
 ENV MODEL_PATH /root/
 ENV HAROS_SRC /root/haros/src
 
 EXPOSE 4000
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]

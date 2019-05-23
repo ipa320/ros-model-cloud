@@ -1,0 +1,3 @@
+[submodule "extractor-interface/catkin"]
+	path = extractor-interface/catkin
+	url = git@github.com:erogleva/catkin.git

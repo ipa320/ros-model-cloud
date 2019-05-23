@@ -2,10 +2,10 @@ import os
 import shlex
 import shutil
 import subprocess
+import re
 from abc import ABCMeta, abstractmethod
 
-
-from git import GitCommandError, cmd
+from git import GitCommandError, cmd, Repo
 
 
 class ExtractorRunner(object):
@@ -85,7 +85,14 @@ class ExtractorRunner(object):
     # should be implemented by both the node & the launch extractor
     @abstractmethod
     def run_analysis(self):
-        pass
+        yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
+        Repo.clone_from(self.repository, self.repo_path)
+
+        # Create a folder where the model files for the request should be stored
+        if os.path.exists(self.model_path):
+            shutil.rmtree(self.model_path)
+
+        os.mkdir(self.model_path)
 
 
 class NodeExtractorRunner(ExtractorRunner):
@@ -106,12 +113,9 @@ class NodeExtractorRunner(ExtractorRunner):
 
     def run_analysis(self):
 
-        # Create a folder where the files for the request should be stored
-        if os.path.exists(self.model_path):
-            shutil.rmtree(self.repo_path)
-
-        os.mkdir(self.model_path)
-
+        for message in super(NodeExtractorRunner, self).run_analysis():
+            yield message
+        
         # Start the Haros runner
         shell_command = '/bin/bash ' + \
                         os.environ['HAROS_RUNNER'] + ' ' + \
@@ -120,7 +124,7 @@ class NodeExtractorRunner(ExtractorRunner):
         extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
                                              bufsize=1)
-
+        
         # Send the logs
         for line in iter(extractor_process.stdout.readline, ''):
             yield self._log_event(line)
@@ -149,3 +153,72 @@ class NodeExtractorRunner(ExtractorRunner):
             yield self._model_event(model, self.node + '.ros')
         else:
             yield self._error_event(self.NO_MODEL_GENERATED)
+
+
+class LaunchExtractorRunner(ExtractorRunner):
+
+    LAUNCH_FILE_NOT_FOUND = 'LAUNCH_FILE_NOT_FOUND'
+
+    def __init__(self, launch, **kwargs):
+        ExtractorRunner.__init__(self, **kwargs)
+        self.launch = launch
+
+    def validate(self):
+        error = super(LaunchExtractorRunner, self).validate()
+        if error:
+            return error
+
+        if not self.launch:
+            return self._error_event(self.INVALID_FIELDS)
+
+        return None
+
+    # check if the launch file is contained in the repository
+    def _launch_file_exists(self):
+        for root, dirs, files in os.walk(self.repo_path):
+            for name in files:
+                if name == self.launch:
+                    return True
+
+        return False
+
+    def run_analysis(self):
+        for message in super(LaunchExtractorRunner, self).run_analysis():
+            yield message
+
+        if not self._launch_file_exists():
+            yield self._error_event(self.LAUNCH_FILE_NOT_FOUND)
+            shutil.rmtree(self.repo_path)
+            return
+
+        shell_command = ['/bin/bash', os.environ['HAROS_RUNNER'], self.repository, self.package, self.launch, 'launch', self.model_path]
+
+        extractor_process = subprocess.Popen(shell_command, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             bufsize=1)
+
+
+        failed_packages_regex = r"Failed to process package (.+?)\b"
+        failed_packages = []
+
+        for line in iter(extractor_process.stdout.readline, ''):
+            failed_package = re.search(failed_packages_regex, line)
+
+            if failed_package:
+                failed_packages.append(failed_package.group(1))
+
+            yield self._log_event(line)
+            print line
+
+        extractor_process.wait()
+
+        print failed_packages
+
+        for file_ in os.listdir(self.model_path):
+            if file_.endswith(".ros") or file_.endswith(".rossystem"):
+                model_file = open(os.path.join(self.model_path, file_), 'r+')
+                model = model_file.read().strip()
+                model_file.close()
+                yield self._model_event(model, file_)
+
+

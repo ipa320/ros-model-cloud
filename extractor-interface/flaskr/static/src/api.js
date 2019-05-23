@@ -110,6 +110,7 @@ class API {
                 }
             });
 
+            console.log(request_str)
             const request = new XMLHttpRequest();
             request.open('get', request_str);
             request.send();
