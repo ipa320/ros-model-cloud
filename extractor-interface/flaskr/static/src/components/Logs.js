@@ -15,7 +15,7 @@ export default class Logs extends Component {
     addLog = (log) => {
         this.setState(prevState => {
             return {
-                logs: [...prevState.logs.slice(-1000), log.message]
+                logs: [...prevState.logs.slice(-100), log.message]
             }
         })
     };

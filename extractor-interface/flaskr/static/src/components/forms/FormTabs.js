@@ -7,17 +7,17 @@ export default class FormTabs extends Component {
     commonFormFields = [
         {name: 'repository', label: 'Git repository'},
         {name: 'package', label: 'Package name'}
-    ]
+    ];
     
     nodeFormFields = [
         ...this.commonFormFields,
         {name: 'node', label: 'Node name'}
-    ]
+    ];
     
     launchFormFields = [
         ...this.commonFormFields,
         {name: 'launch', label: 'Launch file name'}
-    ]
+    ];
 
     render() {
         return <Tabs>

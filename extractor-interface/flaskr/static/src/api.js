@@ -16,7 +16,6 @@ export const errorMessages = {
     SOCKET_NOT_CONNECTED: 'There was a problem connecting to the server.'
 };
 
-
 class API {
 
     constructor() {

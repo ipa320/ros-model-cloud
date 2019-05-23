@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 dependencies=$(rospack depends-indent $1)
 
 declare -A depends_uniq
@@ -27,17 +27,4 @@ do
     esac
 done
 
-cd ..
 
-current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-${current_dir}/catkin/bin/catkin_make_isolated --only-pkg-with-deps $1 -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-3.8 --merge
-
-mkdir build && touch build/compile_commands.json
-cat build_isolated/*/compile_commands.json >> build/compile_commands.json
-sed -i -e 's/\]\[/\,/g' build/compile_commands.json
-
-source devel_isolated/setup.bash
-
-#roslaunch dump if needed
-#ros_model_extractor.py --package $1 --name $2 --launch --output true

@@ -15,11 +15,11 @@ export default class Error extends Component {
 
     showError = () => {
         this.setState({error: errorMessages.SOCKET_NOT_CONNECTED})
-    }
+    };
 
     dismissError = () => {
         this.setState({error: ''});
-    }
+    };
 
     componentDidMount() {
         API.subscribe(eventTypes.SOCKET_ON_ERROR, this.showError);

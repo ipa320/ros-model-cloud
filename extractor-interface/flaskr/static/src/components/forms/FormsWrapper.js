@@ -20,7 +20,7 @@ export default class Forms extends Component {
     defaultFormState = () => {
         const fieldsState = this.props.fields.reduce((prev, curr) => {
             return Object.assign({}, prev, {[curr.name]: ''}) 
-        }, {})
+        }, {});
 
         return {
             ...fieldsState,
@@ -72,8 +72,6 @@ export default class Forms extends Component {
     };
 
     handleSubmit = () => {
-
-        console.log(this.state)
 
         const errors = [];
 

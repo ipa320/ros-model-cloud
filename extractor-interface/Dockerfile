@@ -25,8 +25,9 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 && apt-get install -y nodejs
 
 SHELL ["bash", "-c"]
+RUN source /opt/ros/kinetic/setup.bash
 
-RUN mkdir -p ~/haros/src
+RUN mkdir -p ~/haros
 RUN mkdir -p ~/extractor-interface
 
 # Set the working directory
@@ -41,21 +42,15 @@ RUN npm install
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-3.8/bin/clang++
 
-RUN source /opt/ros/kinetic/setup.bash;\
- cd ~/haros/src;\
- catkin_init_workspace;\
- cd ~/haros;\
- catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1;\
- source ~/haros/devel/setup.bash; \
- haros init
-
 COPY . ./
 
 RUN npm run build
 
+
+
 ENV HAROS_RUNNER /root/extractor-interface/haros_runner.sh
 ENV MODEL_PATH /root/
-ENV HAROS_SRC /root/haros/src
+ENV HAROS_SRC /root/haros
 
 EXPOSE 4000
 CMD ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]

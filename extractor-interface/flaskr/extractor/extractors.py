@@ -27,7 +27,7 @@ class ExtractorRunner(object):
         self.model_path = os.path.join(os.environ['MODEL_PATH'], self.id)
 
         # Path to where the repository is cloned
-        self.repo_path = os.path.join(os.environ['HAROS_SRC'], self._get_repo_basename())
+        self.ws_path = os.path.join(os.environ['HAROS_SRC'], self.id)
 
     def _get_repo_basename(self):
 
@@ -85,14 +85,25 @@ class ExtractorRunner(object):
     # should be implemented by both the node & the launch extractor
     @abstractmethod
     def run_analysis(self):
+        print self.ws_path
+        os.makedirs(os.path.join(self.ws_path, 'src'))
+
+        init_workspace = subprocess.Popen(['catkin_init_workspace'], cwd=os.path.join(self.ws_path, 'src'), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        init_workspace.wait()
+
+        make_ws = subprocess.Popen(['catkin_make'], cwd=self.ws_path, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+        make_ws.wait()
+
         yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
-        Repo.clone_from(self.repository, self.repo_path)
+        Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
 
         # Create a folder where the model files for the request should be stored
         if os.path.exists(self.model_path):
             shutil.rmtree(self.model_path)
 
         os.mkdir(self.model_path)
+
+
 
 
 class NodeExtractorRunner(ExtractorRunner):
@@ -115,11 +126,13 @@ class NodeExtractorRunner(ExtractorRunner):
 
         for message in super(NodeExtractorRunner, self).run_analysis():
             yield message
+
+        print self.ws_path
         
         # Start the Haros runner
         shell_command = '/bin/bash ' + \
                         os.environ['HAROS_RUNNER'] + ' ' + \
-                        self.repository + ' ' + self.package + ' ' + self.node + ' node ' + self.model_path
+                        self.repository + ' ' + self.package + ' ' + self.node + ' node ' + self.model_path + ' ' + self.ws_path
 
         extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
@@ -136,7 +149,7 @@ class NodeExtractorRunner(ExtractorRunner):
 
         # Delete the source repository after the extraction is done
         try:
-            shutil.rmtree(self.repo_path)
+            shutil.rmtree(self.ws_path)
         except (OSError, IOError):
             pass
 
@@ -175,7 +188,7 @@ class LaunchExtractorRunner(ExtractorRunner):
 
     # check if the launch file is contained in the repository
     def _launch_file_exists(self):
-        for root, dirs, files in os.walk(self.repo_path):
+        for root, dirs, files in os.walk(self.ws_path):
             for name in files:
                 if name == self.launch:
                     return True
@@ -188,17 +201,16 @@ class LaunchExtractorRunner(ExtractorRunner):
 
         if not self._launch_file_exists():
             yield self._error_event(self.LAUNCH_FILE_NOT_FOUND)
-            shutil.rmtree(self.repo_path)
+            shutil.rmtree(self.ws_path)
             return
 
-        shell_command = ['/bin/bash', os.environ['HAROS_RUNNER'], self.repository, self.package, self.launch, 'launch', self.model_path]
+        shell_command = ['/bin/bash', os.environ['HAROS_RUNNER'], self.repository, self.package, self.launch, 'launch', self.model_path, self.ws_path]
 
         extractor_process = subprocess.Popen(shell_command, stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
                                              bufsize=1)
 
-
-        failed_packages_regex = r"Failed to process package (.+?)\b"
+        failed_packages_regex = r"Failed to process package '(.+?)'"
         failed_packages = []
 
         for line in iter(extractor_process.stdout.readline, ''):
