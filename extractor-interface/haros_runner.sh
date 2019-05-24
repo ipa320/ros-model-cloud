@@ -4,7 +4,7 @@ current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd ${6}
 source devel/setup.bash
-echo $ROS_PACKAGE_PATH
+
 rosdep install -y -i -r --from-path ${6}/src
 
 if [[ ${4} = 'launch' ]];

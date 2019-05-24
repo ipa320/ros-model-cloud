@@ -19,8 +19,8 @@ class ExtractorRunner(object):
     @abstractmethod
     def __init__(self, repository, package, request_id):
         # Common for the launch & node extractors
-        self.repository = repository
-        self.package = package
+        self.repository = repository.strip()
+        self.package = package.strip()
         self.id = request_id
 
         # Path where the model files are stored
@@ -110,7 +110,7 @@ class NodeExtractorRunner(ExtractorRunner):
 
     def __init__(self, node, **kwargs):
         ExtractorRunner.__init__(self, **kwargs)
-        self.node = node
+        self.node = node.strip()
 
     def validate(self):
         error = super(NodeExtractorRunner, self).validate()
@@ -175,7 +175,7 @@ class LaunchExtractorRunner(ExtractorRunner):
 
     def __init__(self, launch, **kwargs):
         ExtractorRunner.__init__(self, **kwargs)
-        self.launch = launch
+        self.launch = launch.strip()
 
     def validate(self):
         error = super(LaunchExtractorRunner, self).validate()
