@@ -14,7 +14,7 @@ export default class Error extends Component {
     }
 
     showError = () => {
-        this.setState({error: errorMessages.SOCKET_NOT_CONNECTED})
+        this.setState({error: errorMessages.SOCKET_NOT_CONNECTED()})
     };
 
     dismissError = () => {

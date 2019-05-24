@@ -10,10 +10,13 @@ export const eventTypes = {
 };
 
 export const errorMessages = {
-    REPOSITORY_NOT_FOUND: 'The repository could not be found. Please ensure that the link is valid and the repository is public',
-    INVALID_FIELDS: 'Please fill out all fields.',
-    NO_MODEL_GENERATED: 'There was a problem with the model generation.',
-    SOCKET_NOT_CONNECTED: 'There was a problem connecting to the server.'
+    REPOSITORY_NOT_FOUND: () => 'The repository could not be found. Please ensure that the link is valid and the repository is public',
+    INVALID_FIELDS: () => 'Please fill out all fields.',
+    NO_MODEL_GENERATED: () => 'There was a problem with the model generation.',
+    SOCKET_NOT_CONNECTED: () => 'There was a problem connecting to the server.',
+    FAILED_PACKAGES: (packages) => packages.length === 1 ? 
+    `The package '${packages[0]}' could not be built.` : 
+    `The packages ${packages.slice(0, packages.length - 1).map(p => `'${p}'`).join(', ')} and '${packages[packages.length - 1]}' could not be built.`
 };
 
 class API {
@@ -77,7 +80,7 @@ class API {
                         this._execute(eventTypes.SOCKET_ON_MESSAGE_MODELS, data);
                         break;
                     case 'error':
-                        this._execute(eventTypes.SOCKET_ON_MESSAGE_ERRORS, {...data, message: errorMessages[data.message]});
+                        this._execute(eventTypes.SOCKET_ON_MESSAGE_ERRORS, {...data, message: errorMessages[data.message](data.payload)});
                         break;
                     case 'extraction_done':
                         this._execute(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, data);

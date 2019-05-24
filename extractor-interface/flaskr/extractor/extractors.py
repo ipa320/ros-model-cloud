@@ -65,8 +65,8 @@ class ExtractorRunner(object):
     def _log_event(self, message):
         return self._event_template('log', message=message)
 
-    def _error_event(self, message):
-        return self._event_template('error', message=message)
+    def _error_event(self, message, payload=None):
+        return self._event_template('error', message=message, payload=payload)
 
     def _model_event(self, model, file_name):
         return self._event_template('model', model=model, file=file_name)
@@ -171,6 +171,7 @@ class NodeExtractorRunner(ExtractorRunner):
 class LaunchExtractorRunner(ExtractorRunner):
 
     LAUNCH_FILE_NOT_FOUND = 'LAUNCH_FILE_NOT_FOUND'
+    FAILED_PACKAGES = 'FAILED_PACKAGES'
 
     def __init__(self, launch, **kwargs):
         ExtractorRunner.__init__(self, **kwargs)
@@ -224,8 +225,6 @@ class LaunchExtractorRunner(ExtractorRunner):
 
         extractor_process.wait()
 
-        print failed_packages
-
         for file_ in os.listdir(self.model_path):
             if file_.endswith(".ros") or file_.endswith(".rossystem"):
                 model_file = open(os.path.join(self.model_path, file_), 'r+')
@@ -234,3 +233,5 @@ class LaunchExtractorRunner(ExtractorRunner):
                 yield self._model_event(model, file_)
 
 
+        if failed_packages:
+            yield self._error_event(self.FAILED_PACKAGES, failed_packages)

@@ -78,7 +78,7 @@ export default class Forms extends Component {
         // check if some the values are empty
         for (let form of this.state.forms) {
             if (Object.values(form).some(value => !value)) {
-                errors.push({request_id: form.request_id, message: errorMessages.INVALID_FIELDS});
+                errors.push({request_id: form.request_id, message: errorMessages.INVALID_FIELDS()});
             }
         }
 
