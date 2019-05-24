@@ -235,3 +235,9 @@ class LaunchExtractorRunner(ExtractorRunner):
 
         if failed_packages:
             yield self._error_event(self.FAILED_PACKAGES, failed_packages)
+
+        # Delete the workspace after the extraction is done
+        try:
+            shutil.rmtree(self.ws_path)
+        except (OSError, IOError):
+            pass
