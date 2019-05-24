@@ -14,6 +14,7 @@ export const errorMessages = {
     INVALID_FIELDS: () => 'Please fill out all fields.',
     NO_MODEL_GENERATED: () => 'There was a problem with the model generation.',
     SOCKET_NOT_CONNECTED: () => 'There was a problem connecting to the server.',
+    LAUNCH_FILE_NOT_FOUND: () => 'The launch file could not be found in the repository',
     FAILED_PACKAGES: (packages) => packages.length === 1 ? 
     `The package '${packages[0]}' could not be built.` : 
     `The packages ${packages.slice(0, packages.length - 1).map(p => `'${p}'`).join(', ')} and '${packages[packages.length - 1]}' could not be built.`
