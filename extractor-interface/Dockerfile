@@ -46,9 +46,7 @@ COPY . ./
 
 RUN npm run build
 
-
-
-ENV HAROS_RUNNER /root/extractor-interface/haros_runner.sh
+ENV HAROS_RUNNER /root/extractor-interface/scripts/haros_runner.sh
 ENV MODEL_PATH /root/
 ENV HAROS_SRC /root/haros
 

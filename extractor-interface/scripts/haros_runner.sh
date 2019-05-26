@@ -2,7 +2,7 @@
 
 current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-cd ${6}
+cd ${6} # path to the workspace
 source devel/setup.bash
 
 rosdep install -y -i -r --from-path ${6}/src
@@ -13,7 +13,7 @@ then
    ${current_dir}/setup_ws_depends.sh $2
    
    cd ..
-   ${current_dir}/catkin/bin/catkin_make_isolated --only-pkg-with-deps $2 --continue-on-failure -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-3.8 --merge
+   ${current_dir}/../catkin/bin/catkin_make_isolated --only-pkg-with-deps $2 --continue-on-failure -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-3.8 --merge
 
    mkdir build && touch build/compile_commands.json
    cat build_isolated/*/compile_commands.json >> build/compile_commands.json
