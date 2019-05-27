@@ -4,6 +4,7 @@ FROM ros:kinetic-ros-base
 RUN apt-get update && apt-get install -y \
     cppcheck \
     cccc \
+    clang-3.8 \
     libclang-3.8-dev \
     python-pip \
     llvm-3.8-dev \
@@ -24,11 +25,13 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 && apt-get install -y nodejs
 
 SHELL ["bash", "-c"]
+RUN source /opt/ros/kinetic/setup.bash
 
-RUN mkdir -p ~/haros/src
+RUN mkdir -p ~/haros
+RUN mkdir -p ~/extractor-interface
 
 # Set the working directory
-WORKDIR ~/haros
+WORKDIR /root/extractor-interface
 
 # Web app requirements
 COPY requirements.txt .
@@ -39,24 +42,13 @@ RUN npm install
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-3.8/bin/clang++
 
-RUN source /opt/ros/kinetic/setup.bash;\
- cd ~/haros/src;\
- catkin_init_workspace;\
- cd ~/haros;\
- catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1;\
- source ~/haros/devel/setup.bash; \
- haros init
-
-COPY ./ros_model_extractor.py /
-COPY ./haros_runner.sh /
-
 COPY . ./
 
 RUN npm run build
 
-ENV HAROS_RUNNER /haros_runner.sh
+ENV HAROS_RUNNER /root/extractor-interface/scripts/haros_runner.sh
 ENV MODEL_PATH /root/
-ENV HAROS_SRC /root/haros/src
+ENV HAROS_SRC /root/haros
 
 EXPOSE 4000
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]

@@ -1,7 +1,6 @@
 import {h, Component} from 'preact';
-import ExtractNodeForm from "./ExtractNodeForm";
+import Form from "./Form";
 import {Button, Icon, Preloader, Row} from "react-materialize";
-import Error from "../Error";
 import cuid from 'cuid';
 import API, {eventTypes, errorMessages} from '../../api';
 
@@ -13,24 +12,26 @@ export default class Forms extends Component {
 
         this.state = {
             loading: false,
-            extractNodeForms: [],
+            forms: [],
             errors: []
         }
     }
 
     defaultFormState = () => {
+        const fieldsState = this.props.fields.reduce((prev, curr) => {
+            return Object.assign({}, prev, {[curr.name]: ''}) 
+        }, {});
+
         return {
+            ...fieldsState,
             request_id: cuid(),
-            package: '',
-            repository: '',
-            node: ''
         }
     };
 
     addForm = () => {
         this.setState(prevState => {
             return {
-                extractNodeForms: [...prevState.extractNodeForms, this.defaultFormState()]
+                forms: [...prevState.forms, this.defaultFormState()]
             }
         })
     };
@@ -38,7 +39,7 @@ export default class Forms extends Component {
     removeForm = (request_id) => {
         this.setState(prevState => {
             return {
-                extractNodeForms: prevState.extractNodeForms.filter(form => form.request_id !== request_id)
+                forms: prevState.forms.filter(form => form.request_id !== request_id)
             }
         })
     };
@@ -46,7 +47,7 @@ export default class Forms extends Component {
     setValue = (request_id, event) => {
         this.setState(prevState => {
             return {
-                extractNodeForms: prevState.extractNodeForms.map(form => {
+                forms: prevState.forms.map(form => {
                     if (form.request_id !== request_id) {
                         return form
                     }
@@ -75,9 +76,9 @@ export default class Forms extends Component {
         const errors = [];
 
         // check if some the values are empty
-        for (let form of this.state.extractNodeForms) {
+        for (let form of this.state.forms) {
             if (Object.values(form).some(value => !value)) {
-                errors.push({request_id: form.request_id, message: errorMessages.INVALID_FIELDS});
+                errors.push({request_id: form.request_id, message: errorMessages.INVALID_FIELDS()});
             }
         }
 
@@ -89,15 +90,15 @@ export default class Forms extends Component {
 
         this.dismissErrors();
 
-        const extractNodeForms = [];
+        const forms = [];
 
-        this.state.extractNodeForms.map(form => {
+        this.state.forms.map(form => {
             const newId = cuid();
-            extractNodeForms.push({...form, request_id: newId})
+            forms.push({...form, request_id: newId})
         });
 
-        this.sendRequest(extractNodeForms);
-        this.setState({extractNodeForms, errors})
+        this.sendRequest(forms);
+        this.setState({forms, errors})
     };
 
     startLoading = () => {
@@ -118,27 +119,32 @@ export default class Forms extends Component {
         API.subscribe(eventTypes.SOCKET_ON_OPEN, this.startLoading);
         API.subscribe(eventTypes.SOCKET_ON_ERROR, this.stopLoading);
         API.subscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
-
         API.subscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
     }
 
-    render(props, {extractNodeForms, loading, errors}) {
+    componentWillUnmount() {
+        API.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.startLoading);
+        API.unsubscribe(eventTypes.SOCKET_ON_ERROR, this.stopLoading);
+        API.unsubscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
+        API.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
+    }
 
-        const removeDisabled = extractNodeForms.length < 2;
+    render({fields}, {forms, loading, errors}) {
+
+        const removeDisabled = forms.length < 2;
 
         return <div>
-            <Error/>
             {loading && <Preloader size="big" flashing/>}
-            {extractNodeForms.map(form => {
+            {forms.map(form => {
                 const error = errors.find(formError => formError.request_id === form.request_id);
-                return <ExtractNodeForm
-                    request_id={form.request_id}
+                return <Form
                     removeDisabled={removeDisabled}
                     removeForm={this.removeForm}
                     values={form}
                     error={error && error.message}
                     setValue={this.setValue}
                     loading={loading}
+                    fields={fields}
                 />
             })}
             <Row className='float-right'>

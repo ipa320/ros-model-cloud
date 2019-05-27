@@ -27,7 +27,7 @@ export default class Models extends Component {
 
     downloadFiles = async () => {
         try {
-            await API.downloadModelFiles(this.state.models.map(model => model.request_id))
+            await API.downloadModelFiles([...new Set(this.state.models.map(model => model.request_id))])
         } catch (e) {
             console.log(e)
         }

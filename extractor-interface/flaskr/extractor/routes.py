@@ -7,7 +7,7 @@ from flask import render_template, send_file, request
 
 from flaskr.extractor import bp, ws
 from flaskr.extractor.exceptions import ExtractorInvalidUsage
-from flaskr.extractor.extractors import NodeExtractorRunner
+from flaskr.extractor.extractors import NodeExtractorRunner, LaunchExtractorRunner
 
 
 @bp.route('/', methods=['GET'])
@@ -55,6 +55,9 @@ def download_file():
 def ws_template(type, data=None):
     return {'type': type, 'data': data}
 
+def is_launch_request(request):
+    return 'launch' in request
+
 @ws.route('/')
 def websocket(ws):
     while not ws.closed:
@@ -66,18 +69,23 @@ def websocket(ws):
             extractor_runners = []
 
             for request in parsed_message:
-                runner = NodeExtractorRunner(**request)
+                if is_launch_request(request):
+                    runner = LaunchExtractorRunner(**request)
+                else:
+                    runner = NodeExtractorRunner(**request)
                 extractor_runners.append(runner)
 
+            error = None
+            
             for runner in extractor_runners:
                 error = runner.validate()
                 if error:
                     ws.send(json.dumps(error))
                     ws.send(json.dumps(ws_template('extraction_done')))
-                    return
 
-            for runner in extractor_runners:
-                for message in runner.run_analysis():
-                    ws.send(json.dumps(message))
+            if not error:
+                for runner in extractor_runners:
+                    for message in runner.run_analysis():
+                        ws.send(json.dumps(message))
 
-            ws.send(json.dumps(ws_template('extraction_done')))
+                ws.send(json.dumps(ws_template('extraction_done')))
