@@ -7,8 +7,8 @@ export default class Header extends Component {
     render() {
         return <header className="header">
             <h1>ROS Model Extractor</h1>
-            <img src={seronet} alt='SeRoNet'/>
-            <img src={haros} alt='HAROS'/>
+            <a href="https://www.seronet-projekt.de" target="_blank"><img src={seronet} alt='SeRoNet'/> </a> 
+            <a href="https://github.com/git-afsantos/haros" target="_blank"><img src={haros} alt='HAROS'/> </a>
         </header>
     }
 }
