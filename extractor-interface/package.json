@@ -9,10 +9,10 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "cuid": "^2.1.6",
-    "materialize-css": "^1.0.0-rc.2",
+    "materialize-css": "1.0.0-rc.2",
     "preact": "^8.4.2",
-    "preact-compat": "^3.18.5",
-    "react-materialize": "^3.3.0"
+    "preact-compat": "^3.19.0",
+    "react-materialize": "^3.3.3"
   },
   "author": "",
   "license": "ISC",
