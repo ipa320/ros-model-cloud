@@ -14,11 +14,6 @@ RUN apt-get update && apt-get install -y \
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/llvm-3.8/lib
 
 RUN pip install --upgrade pip
-RUN pip install -Iv clang==3.8
-RUN pip install -e git+https://github.com/timtadh/pyflwor.git#egg=pyflwor
-RUN pip install haros==3.1.0
-RUN pip install bonsai-code
-
 RUN apt-get update && apt-get install -y ros-kinetic-desktop
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
@@ -33,10 +28,11 @@ RUN mkdir -p ~/extractor-interface
 # Set the working directory
 WORKDIR /root/extractor-interface
 
-# Web app requirements
+# Python requirements
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -Ir requirements.txt
 
+# Node requirements
 COPY package*.json ./
 RUN npm install
 
@@ -44,6 +40,7 @@ ENV CMAKE_CXX_COMPILER /usr/lib/llvm-3.8/bin/clang++
 
 COPY . ./
 
+# Build the front-end
 RUN npm run build
 
 ENV HAROS_RUNNER /root/extractor-interface/scripts/haros_runner.sh
