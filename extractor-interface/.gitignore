@@ -1,12 +1,15 @@
 venv/
 
-.idea
-.vscode
+.idea/
+.vscode/
 
 *.pyc
 __pycache__/
 
 instance/
+
+workspaces/
+models/
 
 .pytest_cache/
 .coverage
@@ -17,6 +20,6 @@ build/
 *.egg-info/
 .env
 
-node_modules
+node_modules/
 .cache
 

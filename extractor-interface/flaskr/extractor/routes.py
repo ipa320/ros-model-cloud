@@ -34,7 +34,7 @@ def download_file():
      
     for value in request.args.getlist('id'):
         try:
-            full_path = os.path.join(os.environ['MODEL_PATH'], value)
+            full_path = os.path.join(os.path.join(os.getcwd(), 'models'), value)
             ros_files = [os.path.join(full_path, x) for x in os.listdir(full_path) if x.endswith('.ros') or x.endswith('.rossystem')]
             file_paths += ros_files
         except OSError:

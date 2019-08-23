@@ -27,7 +27,6 @@ then
    echo ${dump} > ${launch_path}
 
 else
-   cd ${6}
    catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 fi
 

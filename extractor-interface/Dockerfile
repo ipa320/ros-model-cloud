@@ -22,7 +22,6 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 SHELL ["bash", "-c"]
 RUN source /opt/ros/kinetic/setup.bash
 
-RUN mkdir -p ~/haros
 RUN mkdir -p ~/extractor-interface
 
 # Set the working directory
@@ -42,10 +41,6 @@ COPY . ./
 
 # Build the front-end
 RUN npm run build
-
-ENV HAROS_RUNNER /root/extractor-interface/scripts/haros_runner.sh
-ENV MODEL_PATH /root/
-ENV HAROS_SRC /root/haros
 
 EXPOSE 4000
 CMD ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]

@@ -23,11 +23,21 @@ class ExtractorRunner(object):
         self.package = package.strip()
         self.id = request_id
 
+        self.haros_runner_path = os.path.join(os.getcwd(), 'scripts', 'haros_runner.sh')
+
         # Path where the model files are stored
-        self.model_path = os.path.join(os.environ['MODEL_PATH'], self.id)
+        models_path = os.path.join(os.getcwd(), 'models')
+        if not os.path.exists(models_path):
+            os.mkdir(models_path)
+
+        self.model_path = os.path.join(models_path, self.id)
 
         # Path to where the repository is cloned
-        self.ws_path = os.path.join(os.environ['HAROS_SRC'], self.id)
+        workspaces_path = os.path.join(os.getcwd(), 'workspaces')
+        if not os.path.exists(workspaces_path):
+            os.mkdir(workspaces_path)
+
+        self.ws_path = os.path.join(workspaces_path, self.id)
 
     def _get_repo_basename(self):
 
@@ -131,7 +141,7 @@ class NodeExtractorRunner(ExtractorRunner):
         
         # Start the Haros runner
         shell_command = '/bin/bash ' + \
-                        os.environ['HAROS_RUNNER'] + ' ' + \
+                        self.haros_runner_path + ' ' + \
                         self.repository + ' ' + self.package + ' ' + self.node + ' node ' + self.model_path + ' ' + self.ws_path
 
         extractor_process = subprocess.Popen(shlex.split(shell_command), stdout=subprocess.PIPE,
@@ -205,7 +215,7 @@ class LaunchExtractorRunner(ExtractorRunner):
             shutil.rmtree(self.ws_path)
             return
 
-        shell_command = ['/bin/bash', os.environ['HAROS_RUNNER'], self.repository, self.package, self.launch, 'launch', self.model_path, self.ws_path]
+        shell_command = ['/bin/bash', self.haros_runner_path, self.repository, self.package, self.launch, 'launch', self.model_path, self.ws_path]
 
         extractor_process = subprocess.Popen(shell_command, stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
