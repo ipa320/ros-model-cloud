@@ -1,0 +1,9 @@
+node_modules
+.cache
+.idea
+instance
+workspaces
+models
+venv
+*.pyc
+*.md
