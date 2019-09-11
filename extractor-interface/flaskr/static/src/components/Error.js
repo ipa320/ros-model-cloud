@@ -1,6 +1,7 @@
 import {h, Component} from "preact";
 import { Row } from 'react-materialize';
-import API, {eventTypes, errorMessages} from '../api';
+import Observer from '../observer';
+import {eventTypes} from "../constants";
 
 
 export default class Error extends Component {
@@ -13,8 +14,8 @@ export default class Error extends Component {
         }
     }
 
-    showError = () => {
-        this.setState({error: errorMessages.SOCKET_NOT_CONNECTED()})
+    showError = (error) => {
+        this.setState({error: error.message})
     };
 
     dismissError = () => {
@@ -22,13 +23,19 @@ export default class Error extends Component {
     };
 
     componentDidMount() {
-        API.subscribe(eventTypes.SOCKET_ON_ERROR, this.showError);
-        API.subscribe(eventTypes.SOCKET_ON_OPEN, this.dismissError);
+        Observer.subscribe(eventTypes.VALIDATION_ERROR, this.showError);
+        Observer.subscribe(eventTypes.SOCKET_ON_ERROR, this.showError);
+        Observer.subscribe(eventTypes.SOCKET_ON_OPEN, this.dismissError);
+        Observer.subscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.showError);
+        Observer.subscribe(eventTypes.FILE_DOWNLOAD_ERROR, this.showError);
     }
 
     componentWillUnmount() {
-        API.unsubscribe(eventTypes.SOCKET_ON_ERROR, this.showError);
-        API.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.dismissError);
+        Observer.unsubscribe(eventTypes.VALIDATION_ERROR, this.showError);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_ERROR, this.showError);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.dismissError);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.showError);
+        Observer.unsubscribe(eventTypes.FILE_DOWNLOAD_ERROR, this.showError);
     }
 
     render(props, {error}) {

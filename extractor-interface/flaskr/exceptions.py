@@ -1,9 +1,8 @@
 from flask import jsonify
 
 
-def template(data, status_code=500):
-    return {'message': {'errors': {'body': data}}, 'status_code': status_code}
-
+def template(message, status_code=500, payload=''):
+    return {'message': {'errors': {'body': message, 'payload': payload}}, 'status_code': status_code}
 
 class BaseInvalidUsage(Exception):
 
@@ -19,6 +18,8 @@ class BaseInvalidUsage(Exception):
     def to_json(self):
         rv = self.message
         return jsonify(rv)
+
+
 
 
 

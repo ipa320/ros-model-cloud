@@ -4,14 +4,13 @@ import { Row, Icon, Button, TextInput } from 'react-materialize';
 
 export default class Form extends Component {
 
-    render({ removeDisabled, removeForm, values, error, setValue, loading, fields }) {
+    render({ removeDisabled, removeForm, values, setValue, loading, fields }) {
         return <form>
             <Row className="float-right">
                 <Button small flat className="grey lighten-4"
                     disabled={removeDisabled || loading} 
                     onClick={(event) => {event.preventDefault(); removeForm(values.request_id)}} > <Icon>clear</Icon> </Button>
             </Row>
-            <Row className='flash'>{error}</Row>
             
             {fields.map((field) => {
                 return <Row>

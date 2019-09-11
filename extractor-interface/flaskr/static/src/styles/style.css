@@ -31,6 +31,7 @@ img {
 .flash {
     color: #b80303;
     font-size: 1.2em;
+    padding: 0 .75rem .75rem
 }
 
 .preloader-wrapper.active {

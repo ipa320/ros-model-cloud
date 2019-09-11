@@ -1,5 +1,6 @@
 import {h, Component} from "preact";
-import API, {eventTypes} from './../api';
+import Observer from '../observer';
+import {eventTypes} from "../constants";
 
 export default class Logs extends Component {
 
@@ -8,7 +9,7 @@ export default class Logs extends Component {
 
         this.state = {
             logs: [],
-            errors: []
+            error: false
         }
     }
 
@@ -20,21 +21,19 @@ export default class Logs extends Component {
         })
     };
 
+
     clearLogs = () => {
-        this.setState({logs: [], errors: []})
+        this.setState({logs: [], error: false})
     };
 
     onErrorMessage = (error) => {
-         this.setState(prevState => {
-            return {
-                errors: [...prevState.errors, error]
-            }
-        })
-
+        console.log(error)
+        this.setState({error: true})
     };
 
     onExtractionDone = () => {
-        if (this.state.errors.length > 0) {
+        // this keeps the log in the view in case the extraction produced an error (as a possible explanation)
+        if (this.state.error) {
             return
         }
 
@@ -42,17 +41,17 @@ export default class Logs extends Component {
     };
 
     componentDidMount() {
-        API.subscribe(eventTypes.SOCKET_ON_MESSAGE_LOG, this.addLog);
-        API.subscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
-        API.subscribe(eventTypes.SOCKET_ON_OPEN, this.clearLogs);
-        API.subscribe(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, this.onExtractionDone)
+        Observer.subscribe(eventTypes.SOCKET_ON_MESSAGE_LOG, this.addLog);
+        Observer.subscribe(eventTypes.SOCKET_ON_OPEN, this.clearLogs);
+        Observer.subscribe(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, this.onExtractionDone);
+        Observer.subscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
     }
 
     componentWillUnmount() {
-        API.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_LOG, this.addLog);
-        API.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.clearLogs);
-        API.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
-        API.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, this.onErrorMessage);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_LOG, this.addLog);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.clearLogs);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, this.onErrorMessage);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
     }
 
     render(props, {logs}) {

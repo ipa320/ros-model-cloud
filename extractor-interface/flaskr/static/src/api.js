@@ -1,70 +1,33 @@
+import {errorMessages, eventTypes} from "./constants";
+import Observer from './observer';
 
-export const eventTypes = {
-    SOCKET_ON_MESSAGE_LOG: 'SOCKET_ON_MESSAGE_LOG',
-    SOCKET_ON_MESSAGE_MODELS: 'SOCKET_ON_MESSAGE_MODELS',
-    SOCKET_ON_MESSAGE_ERRORS: 'SOCKET_ON_MESSAGE_ERRORS',
-    SOCKET_ON_ERROR: 'SOCKET_ON_ERROR',
-    SOCKET_ON_OPEN: 'SOCKET_ON_OPEN',
-    SOCKET_ON_CLOSE:'SOCKET_ON_CLOSE',
-    SOCKET_ON_MESSAGE_EXTRACTION_DONE: 'SOCKET_ON_MESSAGE_EXTRACTION_DONE'
-};
-
-export const errorMessages = {
-    REPOSITORY_NOT_FOUND: () => 'The repository could not be found. Please ensure that the link is valid and the repository is public',
-    INVALID_FIELDS: () => 'Please fill out all fields.',
-    NO_MODEL_GENERATED: () => 'There was a problem with the model generation.',
-    SOCKET_NOT_CONNECTED: () => 'There was a problem connecting to the server.',
-    LAUNCH_FILE_NOT_FOUND: () => 'The launch file could not be found in the repository',
-    FAILED_PACKAGES: (packages) => packages.length === 1 ? 
-    `The package '${packages[0]}' could not be built.` : 
-    `The packages ${packages.slice(0, packages.length - 1).map(p => `'${p}'`).join(', ')} and '${packages[packages.length - 1]}' could not be built.`
-};
 
 class API {
 
     constructor() {
-        this.subscriptionsObserver = {};
-
-        for (let type in eventTypes) {
-            this.subscriptionsObserver[type] = []
-        }
-
         this.socket = null
     }
-
-    subscribe = (event, callback) => {
-        this.subscriptionsObserver[event].push(callback);
-    };
-
-    _execute = (event, data) => {
-        this.subscriptionsObserver[event].map((callback) => {
-            return callback(data)
-        })
-    };
-
-    unsubscribe = (event, callback) => {
-        this.subscriptionsObserver[event] = this.subscriptionsObserver[event].filter((cb) => cb !== callback)
-    };
 
     connect = () => {
         return new Promise((resolve, reject) => {
             this.socket = new WebSocket('ws://' + document.domain + ':' + location.port);
 
             this.socket.onopen = () => {
-                this._execute(eventTypes.SOCKET_ON_OPEN);
+                Observer.execute(eventTypes.SOCKET_ON_OPEN);
                 resolve(true);
             };
 
             this.socket.onerror = (err) => {
-                this._execute(eventTypes.SOCKET_ON_ERROR, {message: errorMessages.SOCKET_NOT_CONNECTED});
+                Observer.execute(eventTypes.SOCKET_ON_ERROR, {message: errorMessages.SERVER_ERROR});
                 reject(false);
             };
 
             this.socket.onclose = (event) => {
+                // this is not really reliable
                 if (!event.wasClean) {
-                    this._execute(eventTypes.SOCKET_ON_ERROR, {message: errorMessages.SOCKET_NOT_CONNECTED})
+                    Observer.execute(eventTypes.SOCKET_ON_ERROR, {message: errorMessages.SERVER_ERROR})
                 } else {
-                    this._execute(eventTypes.SOCKET_ON_CLOSE, event)
+                    Observer.execute(eventTypes.SOCKET_ON_CLOSE, event)
                 }
             };
 
@@ -75,16 +38,16 @@ class API {
 
                 switch (type) {
                     case 'log':
-                        this._execute(eventTypes.SOCKET_ON_MESSAGE_LOG, data);
+                        Observer.execute(eventTypes.SOCKET_ON_MESSAGE_LOG, data);
                         break;
                     case 'model':
-                        this._execute(eventTypes.SOCKET_ON_MESSAGE_MODELS, data);
+                        Observer.execute(eventTypes.SOCKET_ON_MESSAGE_MODELS, data);
                         break;
                     case 'error':
-                        this._execute(eventTypes.SOCKET_ON_MESSAGE_ERRORS, {...data, message: errorMessages[data.message](data.payload)});
+                        Observer.execute(eventTypes.SOCKET_ON_MESSAGE_ERRORS, {...data, message: errorMessages[data.message.errors.body](data.payload)});
                         break;
                     case 'extraction_done':
-                        this._execute(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, data);
+                        Observer.execute(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, data);
                         this.socket.close();
                         break;
                 }
@@ -113,7 +76,6 @@ class API {
                 }
             });
 
-            console.log(request_str)
             const request = new XMLHttpRequest();
             request.open('get', request_str);
             request.send();
@@ -154,6 +116,5 @@ class API {
 
     }
 }
-
 
 export default new API();

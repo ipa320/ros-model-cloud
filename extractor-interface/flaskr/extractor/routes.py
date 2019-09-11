@@ -2,9 +2,7 @@ import json
 import os
 import zipfile
 from io import BytesIO
-
 from flask import render_template, send_file, request
-
 from flaskr.extractor import bp, ws
 from flaskr.extractor.exceptions import ExtractorInvalidUsage
 from flaskr.extractor.extractors import NodeExtractorRunner, LaunchExtractorRunner
@@ -25,17 +23,18 @@ def handle_invalid_usage(error):
 
 @bp.route('/download')
 def download_file():
-
     file_paths = []
-    
+
     # Should be called with a list of the request ids
+    # e.g. http://localhost:8000/download?id=cjznzv95f000a2460o09eytuo&id=cjznzv42f000a2460o09eytue
     if not request.args or not request.args.getlist('id'):
         raise ExtractorInvalidUsage.no_files_specified()
-     
+
     for value in request.args.getlist('id'):
         try:
             full_path = os.path.join(os.path.join(os.getcwd(), 'models'), value)
-            ros_files = [os.path.join(full_path, x) for x in os.listdir(full_path) if x.endswith('.ros') or x.endswith('.rossystem')]
+            ros_files = [os.path.join(full_path, x) for x in os.listdir(full_path) if
+                         x.endswith('.ros') or x.endswith('.rossystem')]
             file_paths += ros_files
         except OSError:
             raise ExtractorInvalidUsage.file_not_found()
@@ -52,11 +51,9 @@ def download_file():
         return send_file(file_paths[0], as_attachment=True, attachment_filename=os.path.basename(file_paths[0]))
 
 
-def ws_template(type, data=None):
+def extractor_ws_template(type, data=None):
     return {'type': type, 'data': data}
 
-def is_launch_request(request):
-    return 'launch' in request
 
 @ws.route('/')
 def websocket(ws):
@@ -64,28 +61,27 @@ def websocket(ws):
         message = ws.receive()
         # if the message is None, it means that the connection has been closed by the client
         if message is not None:
-            parsed_message = json.loads(message)
-            print parsed_message
             extractor_runners = []
-
-            for request in parsed_message:
-                if is_launch_request(request):
-                    runner = LaunchExtractorRunner(**request)
+            for extraction_request in json.loads(message):
+                if 'launch' in extraction_request:
+                    runner = LaunchExtractorRunner(**extraction_request)
                 else:
-                    runner = NodeExtractorRunner(**request)
+                    runner = NodeExtractorRunner(**extraction_request)
                 extractor_runners.append(runner)
 
-            error = None
-            
-            for runner in extractor_runners:
-                error = runner.validate()
-                if error:
-                    ws.send(json.dumps(error))
-                    ws.send(json.dumps(ws_template('extraction_done')))
+            try:
+                for runner in extractor_runners:
+                    runner.validate()
 
-            if not error:
                 for runner in extractor_runners:
                     for message in runner.run_analysis():
                         ws.send(json.dumps(message))
 
-                ws.send(json.dumps(ws_template('extraction_done')))
+            except ExtractorInvalidUsage as error:
+                print error.message
+                ws.send(error.to_ws_json())
+
+            for runner in extractor_runners:
+                runner.clean_up()
+
+            ws.send(json.dumps(extractor_ws_template('extraction_done')))

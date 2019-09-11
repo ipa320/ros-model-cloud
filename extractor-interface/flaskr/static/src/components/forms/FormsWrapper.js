@@ -2,7 +2,9 @@ import {h, Component} from 'preact';
 import Form from "./Form";
 import {Button, Icon, Preloader, Row} from "react-materialize";
 import cuid from 'cuid';
-import API, {eventTypes, errorMessages} from '../../api';
+import {eventTypes, errorMessages} from "../../constants";
+import Observer from '../../observer';
+import API from '../../api'
 
 
 export default class Forms extends Component {
@@ -13,7 +15,6 @@ export default class Forms extends Component {
         this.state = {
             loading: false,
             forms: [],
-            errors: []
         }
     }
 
@@ -72,33 +73,27 @@ export default class Forms extends Component {
     };
 
     handleSubmit = () => {
-
-        const errors = [];
-
         // check if some the values are empty
         for (let form of this.state.forms) {
             if (Object.values(form).some(value => !value)) {
-                errors.push({request_id: form.request_id, message: errorMessages.INVALID_FIELDS()});
+                Observer.execute(eventTypes.VALIDATION_ERROR, {message: errorMessages.INVALID_FIELDS()});
+                return
             }
         }
 
-        if (errors.length > 0) {
-            this.setState({errors});
-            return
-        }
-
-
+        // dismiss previous errors
         this.dismissErrors();
 
         const forms = [];
 
+        // reset the id
         this.state.forms.map(form => {
             const newId = cuid();
             forms.push({...form, request_id: newId})
         });
 
         this.sendRequest(forms);
-        this.setState({forms, errors})
+        this.setState({forms})
     };
 
     startLoading = () => {
@@ -109,39 +104,31 @@ export default class Forms extends Component {
         this.setState({loading: false})
     };
 
-    onErrorMessage = (error) => {
-        this.setState(prevState => ({errors: [...prevState.errors, error]}))
-    };
-
     componentDidMount() {
         this.addForm();
 
-        API.subscribe(eventTypes.SOCKET_ON_OPEN, this.startLoading);
-        API.subscribe(eventTypes.SOCKET_ON_ERROR, this.stopLoading);
-        API.subscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
-        API.subscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
+        Observer.subscribe(eventTypes.SOCKET_ON_OPEN, this.startLoading);
+        Observer.subscribe(eventTypes.SOCKET_ON_ERROR, this.stopLoading);
+        Observer.subscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
     }
 
     componentWillUnmount() {
-        API.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.startLoading);
-        API.unsubscribe(eventTypes.SOCKET_ON_ERROR, this.stopLoading);
-        API.unsubscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
-        API.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_OPEN, this.startLoading);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_ERROR, this.stopLoading);
+        Observer.unsubscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
     }
 
-    render({fields}, {forms, loading, errors}) {
+    render({fields}, {forms, loading }) {
 
         const removeDisabled = forms.length < 2;
 
         return <div>
             {loading && <Preloader size="big" flashing/>}
             {forms.map(form => {
-                const error = errors.find(formError => formError.request_id === form.request_id);
                 return <Form
                     removeDisabled={removeDisabled}
                     removeForm={this.removeForm}
                     values={form}
-                    error={error && error.message}
                     setValue={this.setValue}
                     loading={loading}
                     fields={fields}
