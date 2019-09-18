@@ -19,6 +19,8 @@ git submodule update
 
 #### Using a docker container
 
+Instructions on installing Docker can be found here:[https://docs.docker.com/install/linux/docker-ce/ubuntu/](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+
 Build the docker image:
 ```shell
 cd extractor-interface
@@ -34,7 +36,14 @@ Open on your browser the page: http://localhost:4000/ where the Git repository, 
 
 #### Local testing
 
-The app required `python 2.7` and a local installation of `nodejs`. It assumes that the terminal shell, in which it is started, has a source `/opt/ros/<distro>/setup.bash`. 
+The app requires `python 2.7` and a local installation of `nodejs`. It assumes that the terminal shell, in which it is started, has a source `/opt/ros/<distro>/setup.bash`. The setup described below has been tested on Ubuntu 16.04 with ROS Kinetic.
+
+Install node (detailed instructions can be found [here](https://gist.github.com/d2s/372b5943bce17b964a79)):
+
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+nvm install 10
+```
 
 The dependencies needed for [HAROS](https://github.com/git-afsantos/haros) need to be set up:
 
@@ -49,7 +58,6 @@ Additionally, install `clang-3.8`
 ```shell
 [sudo] apt-get install clang-3.8
 ```
-
 
 Set the `LD_LIBRARY_PATH` environmental variable:
 ```shell
@@ -84,9 +92,11 @@ Run the app:
 gunicorn -k flask_sockets.worker wsgi:app
 ```
 
-To start the frontend in watch-mode, run:
+To start the frontend in watch-mode (will rebuild automatically if one of the files in the `static` folder changes), run in a new terminal:
 ```shell
 npm run watch
 ```
 
 Open http://127.0.0.1:8000 in a browser.
+
+All generated models will be saved in the folder `extractor-interface/models`. Temporary workspaces used for the extraction are created in the folder `extractor-interface/workspaces`.
