@@ -238,12 +238,12 @@ class subscriber:
 class service_server:
   def __init__(self, name, srv_type):
     self.name = name
-    self.srv_type = srv_type.replace("/",".")
+    self.srv_type = srv_type.replace("/",".").replace("Request","")
 
 class service_client:
   def __init__(self, name, srv_type):
     self.name = name
-    self.srv_type = srv_type.replace("/",".")
+    self.srv_type = srv_type.replace("/",".").replace("Response","")
 
 class RosInterface:
   def __init__(self, name, ref):
