@@ -34,6 +34,13 @@ Run the container:
 
 Open on your browser the page: http://localhost:4000/ where the Git repository, node and package names can be set
 
+#### Using a docker container on a server as a web service
+
+```shell
+[sudo] docker run -d --restart always -p 4000:4000 -ti haros:latest
+```
+where *-d* means in the background and *--restart always* that the daemon job will be automatically started if the system is rebooted.
+
 #### Local testing
 
 The app requires `python 2.7` and a local installation of `nodejs`. It assumes that the terminal shell, in which it is started, has a source `/opt/ros/<distro>/setup.bash`. The setup described below has been tested on Ubuntu 16.04 with ROS Kinetic.
