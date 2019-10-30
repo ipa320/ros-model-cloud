@@ -19,7 +19,7 @@
 import os
 import argparse
 import rospkg
-from haros.extractor import NodeExtractor
+from haros.extractor import NodeExtractor, RoscppExtractor
 from haros.metamodel import Node, Package, RosName, SourceFile
 from haros.launch_parser import LaunchParser, LaunchParserError, NodeTag
 from haros.cmake_parser import RosCMakeParser
@@ -87,7 +87,7 @@ class RosExtractor():
         pkg.path = rospack.get_path(pkg_name)
         roscomponent = None
         #HAROS NODE EXTRACTOR
-        analysis = NodeExtractor(pkg, env=dict(os.environ), ws=ws ,node_cache=False, parse_nodes=True)
+        analysis = RoscppExtractor(pkg, ws)
         node = Node(node_name, pkg, rosname=RosName(node_name))
         srcdir = pkg.path[len(ws):]
         srcdir = os.path.join(ws, srcdir.split(os.sep, 1)[0])
@@ -124,17 +124,17 @@ class RosExtractor():
         
         for call in (CodeQuery(gs).all_calls.where_name("advertise").where_result("ros::Publisher").get()):
             if len(call.arguments) > 1:
-                name = analysis._extract_topic(call)
+                name = analysis._extract_topic(call, topic_pos=0)
                 msg_type = analysis._extract_message_type(call)
-                queue_size = analysis._extract_queue_size(call)
+                queue_size = analysis._extract_queue_size(call, queue_pos=1)
                 pub = publisher(name, msg_type)
                 rosmodel.pubs.append(pub)
                 roscomponent.add_interface(name,"pubs", pkg_name+"."+art_name+"."+node_name+"."+name)
         for call in (CodeQuery(gs).all_calls.where_name("subscribe").where_result("ros::Subscriber").get()):
             if len(call.arguments) > 1:
-                name = analysis._extract_topic(call)
+                name = analysis._extract_topic(call, topic_pos=0)
                 msg_type = analysis._extract_message_type(call)
-                queue_size = analysis._extract_queue_size(call)
+                queue_size = analysis._extract_queue_size(call, queue_pos=1)
                 sub = subscriber(name, msg_type)
                 rosmodel.subs.append(sub)
                 roscomponent.add_interface(name,"subs", pkg_name+"."+art_name+"."+node_name+"."+name)
