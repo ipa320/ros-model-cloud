@@ -5,7 +5,7 @@ from io import BytesIO
 from flask import render_template, send_file, request
 from flaskr.extractor import bp, ws
 from flaskr.extractor.exceptions import ExtractorInvalidUsage
-from flaskr.extractor.extractors import NodeExtractorRunner, LaunchExtractorRunner
+from flaskr.extractor.extractors import NodeExtractorRunner, LaunchExtractorRunner, MsgsExtractorRunner
 
 
 @bp.route('/', methods=['GET'])
@@ -65,8 +65,10 @@ def websocket(ws):
             for extraction_request in json.loads(message):
                 if 'launch' in extraction_request:
                     runner = LaunchExtractorRunner(**extraction_request)
-                else:
+                elif 'node' in extraction_request:
                     runner = NodeExtractorRunner(**extraction_request)
+                else:
+                    runner = MsgsExtractorRunner(**extraction_request)
                 extractor_runners.append(runner)
 
             try:

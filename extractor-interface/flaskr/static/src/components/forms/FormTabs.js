@@ -19,10 +19,18 @@ export default class FormTabs extends Component {
         {name: 'launch', label: 'Launch file name'}
     ];
 
+    msgFormFields = [
+        {name: 'repository_opt', label: 'Git repository (optional)'},
+        {name: 'package', label: 'Package name'}
+    ];
+
     render() {
         return <Tabs>
             <Tab title="Node analysis">
                 <FormsWrapper fields={this.nodeFormFields}/>
+            </Tab>
+            <Tab title="Specifications analysis">
+                <FormsWrapper fields={this.commonFormFields}/>
             </Tab>
             <Tab title="Launch analysis">
                 <FormsWrapper fields={this.launchFormFields}/>

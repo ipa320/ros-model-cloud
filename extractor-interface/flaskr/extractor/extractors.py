@@ -17,6 +17,7 @@ class ExtractorRunner(object):
         self.package = package.strip()
         self.id = request_id
         self.haros_runner_path = os.path.join(os.getcwd(), 'scripts', 'haros_runner.sh')
+        self.messages_extractor_path = os.path.join(os.getcwd(), 'scripts', 'messages_generator_to_file.sh')
 
         # Path where the model files are stored
         models_path = os.path.join(os.getcwd(), 'models')
@@ -109,6 +110,59 @@ class ExtractorRunner(object):
 
         os.mkdir(self.model_path)
 
+class MsgsExtractorRunner(ExtractorRunner):
+
+    def __init__(self, **kwargs):
+        ExtractorRunner.__init__(self, **kwargs)
+
+    def validate(self):
+        if not self.package:
+            raise ExtractorInvalidUsage.missing_field()
+        # Path where the model files are stored
+        models_path = os.path.join(os.getcwd(), 'models')
+        if not os.path.exists(models_path):
+            os.mkdir(models_path)
+
+        self.model_path = os.path.join(models_path, self.package)
+
+        # Path to where the repository is cloned
+        workspaces_path = os.path.join(os.getcwd(), 'workspaces')
+        if not os.path.exists(workspaces_path):
+            os.mkdir(workspaces_path)
+
+        self.ws_path = os.path.join(workspaces_path, self.package)
+
+        if not self.package:
+            raise ExtractorInvalidUsage.missing_field()
+
+    def run_analysis(self):
+        for message in super(MsgsExtractorRunner, self).run_analysis():
+            yield message
+
+        # Start the Haros runner
+        model_full_path = os.path.join(self.model_path, self.package + '.ros')
+
+        shell_command = ['/bin/bash', self.messages_extractor_path, self.ws_path, model_full_path, self.package]
+
+        extractor_process = subprocess.Popen(shell_command, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             bufsize=1)
+        # Send the logs
+        for line in iter(extractor_process.stdout.readline, ''):
+            yield self._log_event(line)
+            print line
+
+        extractor_process.wait()
+
+        # Read the file with the model
+        try:
+            model_file = open(os.path.join(self.model_path, self.package + '.ros'), 'r+')
+            model = model_file.read().strip()
+            model_file.close()
+            yield self._model_event(model, self.package + '.ros')
+            self.clean_up()
+        except (OSError, IOError):
+            raise ExtractorInvalidUsage.no_model_generated()
 
 class NodeExtractorRunner(ExtractorRunner):
 

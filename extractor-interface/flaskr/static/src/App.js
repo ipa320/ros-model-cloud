@@ -16,11 +16,11 @@ export default class App extends Component {
         return <div>
             <Header />
             <Row>
-                <Col s={12} m={5} l={3}>
+                <Col s={12} m={5} l={4}>
                     <Error/>
                     <FormTabs />
                 </Col>
-                <Col s={12} m={7} l={9}>
+                <Col s={12} m={7} l={8}>
                     <Models />
                     <Logs />
                 </Col>
