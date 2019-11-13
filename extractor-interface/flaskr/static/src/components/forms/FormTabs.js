@@ -20,7 +20,7 @@ export default class FormTabs extends Component {
     ];
 
     msgFormFields = [
-        {name: 'repository_opt', label: 'Git repository (optional)'},
+        {name: 'repository_optional', label: 'Git repository (optional)'},
         {name: 'package', label: 'Package name'}
     ];
 
@@ -30,7 +30,7 @@ export default class FormTabs extends Component {
                 <FormsWrapper fields={this.nodeFormFields}/>
             </Tab>
             <Tab title="Specifications analysis">
-                <FormsWrapper fields={this.commonFormFields}/>
+                <FormsWrapper fields={this.msgFormFields}/>
             </Tab>
             <Tab title="Launch analysis">
                 <FormsWrapper fields={this.launchFormFields}/>

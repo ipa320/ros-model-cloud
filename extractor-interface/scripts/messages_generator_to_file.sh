@@ -4,6 +4,13 @@ workspace_path=$1
 model_path=$2
 package_list=$(sed 's/[^ ]* *//' <<< $@)
 package_list=$(sed 's/[^ ]* *//' <<< $package_list)
+distro=$(echo $ROS_DISTRO)
+
+for pkg in $package_list
+do
+    pkg=$(sed 's/_/-/g' <<< $pkg)    
+    sudo apt install ros-$distro-$pkg
+done
 
 scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 

@@ -82,9 +82,10 @@ class ExtractorRunner(object):
     # check if some of the fields are empty and if the repository is available
     @abstractmethod
     def validate(self):
-        if not self.repository or not self.package:
-            raise ExtractorInvalidUsage.missing_field()
-
+        if not self.repository:
+            raise ExtractorInvalidUsage.missing_field("Repository")
+        if not self.package:
+            raise ExtractorInvalidUsage.missing_field("Package")
         if not self._check_remote_repository():
             raise ExtractorInvalidUsage.repository_not_found(payload=self.repository)
 
@@ -101,8 +102,9 @@ class ExtractorRunner(object):
                                    shell=True)
         make_ws.wait()
 
-        yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
-        Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
+        if self.repository!="":
+            yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
+            Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
 
         # Create a folder where the model files for the request should be stored
         if os.path.exists(self.model_path):
@@ -117,23 +119,10 @@ class MsgsExtractorRunner(ExtractorRunner):
 
     def validate(self):
         if not self.package:
-            raise ExtractorInvalidUsage.missing_field()
+            raise ExtractorInvalidUsage.missing_field("Package")
         # Path where the model files are stored
-        models_path = os.path.join(os.getcwd(), 'models')
-        if not os.path.exists(models_path):
-            os.mkdir(models_path)
-
-        self.model_path = os.path.join(models_path, self.package)
-
-        # Path to where the repository is cloned
-        workspaces_path = os.path.join(os.getcwd(), 'workspaces')
-        if not os.path.exists(workspaces_path):
-            os.mkdir(workspaces_path)
-
-        self.ws_path = os.path.join(workspaces_path, self.package)
-
-        if not self.package:
-            raise ExtractorInvalidUsage.missing_field()
+        if self.repository!="" and not super(MsgsExtractorRunner, self)._check_remote_repository():
+            raise ExtractorInvalidUsage.repository_not_found(payload=self.repository)
 
     def run_analysis(self):
         for message in super(MsgsExtractorRunner, self).run_analysis():
@@ -174,7 +163,7 @@ class NodeExtractorRunner(ExtractorRunner):
         super(NodeExtractorRunner, self).validate()
 
         if not self.node:
-            raise ExtractorInvalidUsage.missing_field()
+            raise ExtractorInvalidUsage.missing_field("Node name")
 
     def run_analysis(self):
         for message in super(NodeExtractorRunner, self).run_analysis():
@@ -214,7 +203,7 @@ class LaunchExtractorRunner(ExtractorRunner):
         super(LaunchExtractorRunner, self).validate()
 
         if not self.launch:
-            raise ExtractorInvalidUsage.missing_field()
+            raise ExtractorInvalidUsage.missing_field("Launch file name")
 
     # check if the launch file is contained in the repository
     def _launch_file_exists(self):

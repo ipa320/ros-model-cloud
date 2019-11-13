@@ -68,6 +68,8 @@ def websocket(ws):
                 elif 'node' in extraction_request:
                     runner = NodeExtractorRunner(**extraction_request)
                 else:
+                    extraction_request.update({"repository": extraction_request['repository_optional']})
+                    del extraction_request['repository_optional']
                     runner = MsgsExtractorRunner(**extraction_request)
                 extractor_runners.append(runner)
 
