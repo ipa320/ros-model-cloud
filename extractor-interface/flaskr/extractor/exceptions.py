@@ -33,8 +33,8 @@ class ExtractorInvalidUsage(BaseInvalidUsage):
         return cls(payload=payload, **REPOSITORY_NOT_FOUND)
 
     @classmethod
-    def missing_field(cls):
-        return cls(**MISSING_FIELD)
+    def missing_field(cls, payload):
+        return cls(payload=payload, **MISSING_FIELD)
 
     @classmethod
     def no_model_generated(cls):

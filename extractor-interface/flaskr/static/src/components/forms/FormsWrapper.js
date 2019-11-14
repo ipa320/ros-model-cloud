@@ -75,10 +75,18 @@ export default class Forms extends Component {
     handleSubmit = () => {
         // check if some the values are empty
         for (let form of this.state.forms) {
-            if (Object.values(form).some(value => !value)) {
-                Observer.execute(eventTypes.VALIDATION_ERROR, {message: errorMessages.INVALID_FIELDS()});
-                return
-            }
+            //if (Object.values(form).some(value => !value)) {
+            //    Observer.execute(eventTypes.VALIDATION_ERROR, {message: errorMessages.INVALID_FIELDS()});
+                //return
+            //}
+
+            Object.entries(form).forEach(function check_optional(fields){
+                if (!fields[0].includes('optional') && fields[1]==""){
+                    Observer.execute(eventTypes.VALIDATION_ERROR, {message: errorMessages.MISSING_FIELD(fields[0])})
+                    return
+                }
+            })
+
         }
 
         // dismiss previous errors

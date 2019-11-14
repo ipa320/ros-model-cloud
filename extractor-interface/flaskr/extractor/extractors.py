@@ -11,12 +11,14 @@ class ExtractorRunner(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, repository, package, request_id):
+    def __init__(self, repository, package, request_id, branch_optional):
         # Common for the launch & node extractors
         self.repository = repository.strip()
         self.package = package.strip()
+        self.branch_optional = branch_optional.strip()
         self.id = request_id
         self.haros_runner_path = os.path.join(os.getcwd(), 'scripts', 'haros_runner.sh')
+        self.messages_extractor_path = os.path.join(os.getcwd(), 'scripts', 'messages_generator_to_file.sh')     
 
         # Path where the model files are stored
         models_path = os.path.join(os.getcwd(), 'models')
@@ -81,9 +83,10 @@ class ExtractorRunner(object):
     # check if some of the fields are empty and if the repository is available
     @abstractmethod
     def validate(self):
-        if not self.repository or not self.package:
-            raise ExtractorInvalidUsage.missing_field()
-
+        if not self.repository:
+            raise ExtractorInvalidUsage.missing_field("Repository")
+        if not self.package:
+            raise ExtractorInvalidUsage.missing_field("Package")
         if not self._check_remote_repository():
             raise ExtractorInvalidUsage.repository_not_found(payload=self.repository)
 
@@ -100,8 +103,12 @@ class ExtractorRunner(object):
                                    shell=True)
         make_ws.wait()
 
-        yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
-        Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
+        if self.repository!="":
+            yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
+            if self.branch_optional!="":
+                Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()),branch=self.branch_optional)
+            else:
+                Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
 
         # Create a folder where the model files for the request should be stored
         if os.path.exists(self.model_path):
@@ -109,6 +116,46 @@ class ExtractorRunner(object):
 
         os.mkdir(self.model_path)
 
+class MsgsExtractorRunner(ExtractorRunner):
+
+    def __init__(self, **kwargs):
+        ExtractorRunner.__init__(self, **kwargs)
+
+    def validate(self):
+        if not self.package:
+            raise ExtractorInvalidUsage.missing_field("Package")
+        # Path where the model files are stored
+        if self.repository!="" and not super(MsgsExtractorRunner, self)._check_remote_repository():
+            raise ExtractorInvalidUsage.repository_not_found(payload=self.repository)
+
+    def run_analysis(self):
+        for message in super(MsgsExtractorRunner, self).run_analysis():
+            yield message
+
+        # Start the Haros runner
+        model_full_path = os.path.join(self.model_path, self.package + '.ros')
+
+        shell_command = ['/bin/bash', self.messages_extractor_path, self.ws_path, model_full_path, self.package]
+
+        extractor_process = subprocess.Popen(shell_command, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             bufsize=1)
+        # Send the logs
+        for line in iter(extractor_process.stdout.readline, ''):
+            yield self._log_event(line)
+            print line
+
+        extractor_process.wait()
+
+        # Read the file with the model
+        try:
+            model_file = open(os.path.join(self.model_path, self.package + '.ros'), 'r+')
+            model = model_file.read().strip()
+            model_file.close()
+            yield self._model_event(model, self.package + '.ros')
+            self.clean_up()
+        except (OSError, IOError):
+            raise ExtractorInvalidUsage.no_model_generated()
 
 class NodeExtractorRunner(ExtractorRunner):
 
@@ -120,7 +167,7 @@ class NodeExtractorRunner(ExtractorRunner):
         super(NodeExtractorRunner, self).validate()
 
         if not self.node:
-            raise ExtractorInvalidUsage.missing_field()
+            raise ExtractorInvalidUsage.missing_field("Node name")
 
     def run_analysis(self):
         for message in super(NodeExtractorRunner, self).run_analysis():
@@ -160,7 +207,7 @@ class LaunchExtractorRunner(ExtractorRunner):
         super(LaunchExtractorRunner, self).validate()
 
         if not self.launch:
-            raise ExtractorInvalidUsage.missing_field()
+            raise ExtractorInvalidUsage.missing_field("Launch file name")
 
     # check if the launch file is contained in the repository
     def _launch_file_exists(self):
