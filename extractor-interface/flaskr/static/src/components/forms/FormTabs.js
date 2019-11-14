@@ -6,6 +6,7 @@ export default class FormTabs extends Component {
 
     commonFormFields = [
         {name: 'repository', label: 'Git repository'},
+        {name: 'branch_optional', label: 'Branch (optional)'},
         {name: 'package', label: 'Package name'}
     ];
     
@@ -21,6 +22,7 @@ export default class FormTabs extends Component {
 
     msgFormFields = [
         {name: 'repository_optional', label: 'Git repository (optional)'},
+        {name: 'branch_optional', label: 'Branch (optional)'},
         {name: 'package', label: 'Package name'}
     ];
 

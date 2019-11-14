@@ -11,13 +11,14 @@ class ExtractorRunner(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, repository, package, request_id):
+    def __init__(self, repository, package, request_id, branch_optional):
         # Common for the launch & node extractors
         self.repository = repository.strip()
         self.package = package.strip()
+        self.branch_optional = branch_optional.strip()
         self.id = request_id
         self.haros_runner_path = os.path.join(os.getcwd(), 'scripts', 'haros_runner.sh')
-        self.messages_extractor_path = os.path.join(os.getcwd(), 'scripts', 'messages_generator_to_file.sh')
+        self.messages_extractor_path = os.path.join(os.getcwd(), 'scripts', 'messages_generator_to_file.sh')     
 
         # Path where the model files are stored
         models_path = os.path.join(os.getcwd(), 'models')
@@ -104,7 +105,10 @@ class ExtractorRunner(object):
 
         if self.repository!="":
             yield self._log_event('Cloning into {0}...'.format(self._get_repo_basename()))
-            Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
+            if self.branch_optional!="":
+                Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()),branch=self.branch_optional)
+            else:
+                Repo.clone_from(self.repository, os.path.join(self.ws_path, 'src', self._get_repo_basename()))
 
         # Create a folder where the model files for the request should be stored
         if os.path.exists(self.model_path):
