@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM ros:kinetic-ros-core
+FROM ros:kinetic-robot
 
 RUN apt-get update && apt-get install -y \
     cppcheck \
