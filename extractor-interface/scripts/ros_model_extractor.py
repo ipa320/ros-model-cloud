@@ -111,7 +111,7 @@ class RosExtractor():
             if node.language == "py":
                 parser = PyAstParser(workspace = ws)
                 analysis = RospyExtractor(pkg, ws)
-            node.source_tree = parser.global_scope
+            #node.source_tree = parser.global_scope
             for sf in node.source_files:
                 if parser.parse(sf.path) is not None:
                     # ROS MODEL EXTRACT PRIMITIVES
@@ -127,6 +127,7 @@ class RosExtractor():
 
   def extract_primitives(self, node, parser, analysis, rosmodel, roscomponent, pkg_name, node_name, art_name):
         gs = parser.global_scope
+        node.source_tree = parser.global_scope
         if node.language == "cpp":
             for call in (CodeQuery(gs).all_calls.where_name("advertise").where_result("ros::Publisher").get()):
                 if len(call.arguments) > 1:
