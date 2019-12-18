@@ -1,26 +1,26 @@
 # Use an official Python runtime as a parent image
-FROM ros:kinetic-robot
+FROM ros:melodic-ros-base
 
 RUN apt-get update && apt-get install -y \
     cppcheck \
     cccc \
-    clang-3.8 \
-    libclang-3.8-dev \
+    clang-4.0 \
+    libclang-4.0-dev \
     python-pip \
-    llvm-3.8-dev \
+    llvm-4.0-dev \
     wget \
     netbase
 
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/llvm-3.8/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/llvm-4.0/lib
 
 RUN pip install --upgrade pip
-RUN apt-get update && apt-get install -y ros-kinetic-desktop
+RUN apt-get update && apt-get install -y ros-melodic-desktop
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 && apt-get install -y nodejs
 
 SHELL ["bash", "-c"]
-RUN source /opt/ros/kinetic/setup.bash
+RUN source /opt/ros/melodic/setup.bash
 
 RUN mkdir -p ~/extractor-interface
 
@@ -35,7 +35,7 @@ RUN pip install -Ir requirements.txt
 COPY package*.json ./
 RUN npm install
 
-ENV CMAKE_CXX_COMPILER /usr/lib/llvm-3.8/bin/clang++
+ENV CMAKE_CXX_COMPILER /usr/lib/llvm-4.0/bin/clang++
 
 COPY . ./
 
