@@ -41,8 +41,8 @@ class RosExtractor():
 
     #BONSAI PARSER
     parser = CppAstParser(workspace = ws)
-    parser.set_library_path("/usr/lib/llvm-3.8/lib")
-    parser.set_standard_includes("/usr/lib/llvm-3.8/lib/clang/3.8.0/include")
+    parser.set_library_path("/usr/lib/llvm-4.0/lib")
+    parser.set_standard_includes("/usr/lib/llvm-4.0/lib/clang/4.0.0/include")
     db_dir = os.path.join(ws, "build")
     if os.path.isfile(os.path.join(db_dir, "compile_commands.json")):
         parser.set_database(db_dir)

@@ -2,7 +2,7 @@ astroid==1.6.6
 backports.functools-lru-cache==1.5
 bonsai-code==0.5.0
 catkin-pkg==0.4.13
-clang==3.8
+clang==4.0
 Click==7.0
 colorama==0.4.1
 configparser==3.8.1
