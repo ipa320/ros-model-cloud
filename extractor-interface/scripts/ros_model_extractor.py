@@ -115,6 +115,8 @@ class RosExtractor():
             for sf in node.source_files:
                 if parser.parse(sf.path) is not None:
                     # ROS MODEL EXTRACT PRIMITIVES
+                    if node.language == "py":
+                        node_name=node_name.replace(".py","")
                     rosmodel = ros_model(pkg.name, node_name, node_name)
                     roscomponent = ros_component(name, ns)
                     self.extract_primitives(node, parser, analysis, rosmodel, roscomponent, pkg_name, node_name, node_name)
@@ -381,6 +383,8 @@ class ros_system:
             subs = comp.subs
             srvsrvs = comp.srvsrvs
             srvcls = comp.srvcls
+            actsrvs = comp.actsrvs
+            actcls = comp.actcls
             if comp.ns is not None:
                 system_model_str+="        ComponentInterface { name '"+str(comp.name)+"' NameSpace '"+str(comp.ns)+"' \n" 
             else:
