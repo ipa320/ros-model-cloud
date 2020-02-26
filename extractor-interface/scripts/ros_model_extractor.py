@@ -113,15 +113,21 @@ class RosExtractor():
                 analysis = RospyExtractor(pkg, ws)
             #node.source_tree = parser.global_scope
             for sf in node.source_files:
-                if parser.parse(sf.path) is not None:
-                    # ROS MODEL EXTRACT PRIMITIVES
-                    if node.language == "py":
-                        node_name=node_name.replace(".py","")
-                    rosmodel = ros_model(pkg.name, node_name, node_name)
-                    roscomponent = ros_component(name, ns)
-                    self.extract_primitives(node, parser, analysis, rosmodel, roscomponent, pkg_name, node_name, node_name)
-                    # SAVE ROS MODEL
-                    model_str = rosmodel.save_model(self.args.model_path)
+                try:
+                    if parser.parse(sf.path) is not None:
+                        # ROS MODEL EXTRACT PRIMITIVES
+                        if node.language == "py":
+                            node_name=node_name.replace(".py","")
+                        rosmodel = ros_model(pkg.name, node_name, node_name)
+                        roscomponent = ros_component(name, ns)
+                        try:
+                            self.extract_primitives(node, parser, analysis, rosmodel, roscomponent, pkg_name, node_name, node_name)
+                            # SAVE ROS MODEL
+                            model_str = rosmodel.save_model(self.args.model_path)
+                        except:
+                            pass
+                except:
+                    pass
             if rossystem is not None and roscomponent is not None:
                 rossystem.add_component(roscomponent)
         if self.args.output:
