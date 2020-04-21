@@ -34,7 +34,6 @@ RUN pip install -Ir requirements.txt
 # Node requirements
 COPY package*.json ./
 RUN npm install -g npm
-RUN npm install parcel-bundler --save-dev
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-4.0/bin/clang++
 
