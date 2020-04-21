@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM ros:melodic-ros-base
+FROM ros:melodic
 
 RUN apt-get update && apt-get install -y \
     cppcheck \
@@ -33,7 +33,7 @@ RUN pip install -Ir requirements.txt
 
 # Node requirements
 COPY package*.json ./
-RUN npm install -g npm
+RUN npm install -g npm --save parcel-bundler
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-4.0/bin/clang++
 
