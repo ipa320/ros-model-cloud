@@ -12,7 +12,9 @@
     "materialize-css": "1.0.0-rc.2",
     "preact": "^8.4.2",
     "preact-compat": "^3.19.0",
-    "react-materialize": "^3.3.3"
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-materialize": "^3.8.6"
   },
   "author": "",
   "license": "ISC",
@@ -24,16 +26,6 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-env": "^1.7.0",
-    "parcel-bundler": "^1.12.4"
-  },
-  "alias": {
-    "react": "preact-compat",
-    "react-dom": "preact-compat"
-  },
-  "optionalDependencies": {
-    "fsevents": "*"
-  },
-  "resolutions": {
-    "deasync": "0.1.16"
+    "parcel-bundler": "^1.12.3"
   }
 }
