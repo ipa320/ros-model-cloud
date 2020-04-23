@@ -38,5 +38,7 @@ COPY . ./
 RUN npm install
 RUN npm run build
 
+ENV GIT_PYTHON_REFRESH quiet
+
 EXPOSE 4000
 CMD ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]
