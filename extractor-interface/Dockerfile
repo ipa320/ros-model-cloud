@@ -34,16 +34,16 @@ RUN pip install -Ir requirements.txt
 
 # Node requirements
 COPY package.json ./
-RUN npm -v
-RUN npm install npm@latest -g
+#RUN npm -v
+#RUN npm install npm@latest -g
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-4.0/bin/clang++
 
 COPY . ./
 
 # Build the front-end
-RUN npm install
-RUN npm run build
+#RUN npm install
+#RUN npm run build
 
 ENV GIT_PYTHON_REFRESH quiet
 

@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
+    "core-js": "^3.6.5",
     "cuid": "^2.1.6",
+    "express": "^4.17.1",
     "materialize-css": "1.0.0-rc.2",
     "preact": "^8.4.2",
     "preact-compat": "^3.19.0",

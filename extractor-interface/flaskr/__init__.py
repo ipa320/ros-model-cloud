@@ -26,6 +26,7 @@ def create_app(test_config=None):
     from . import extractor
     app.register_blueprint(extractor.bp)
     app.debug = True
+    app.config['DEBUG'] = os.environ.get('DEBUG', True)
     sockets_app = Sockets(app)
     sockets_app.register_blueprint(extractor.ws)
 
