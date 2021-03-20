@@ -27,7 +27,7 @@ gunicorn==19.9.0
 haros==3.8.0
 isort==4.3.21
 itsdangerous==1.1.0
-Jinja2==2.10.1
+Jinja2==2.11.3
 lazy-object-proxy==1.4.2
 lizard==1.16.6
 mando==0.6.4
