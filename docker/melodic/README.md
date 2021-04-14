@@ -17,6 +17,6 @@ Call the ros-model extractor plugin, remember you have to also clone the reposit
 For example:
 
 ```
-[sudo] docker run -it haros_melodic:latest /haros_runner.sh cob_sick_s300 cob_sick_s300 node . /root/catkin_ws https://github.com/ipa320/cob_driver
+[sudo] docker run -it haros_melodic:latest /haros_runner.sh hokuyo_node hokuyo_node node . /root/ws https://github.com/ros-drivers/hokuyo_node
 ```
 

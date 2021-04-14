@@ -18,14 +18,16 @@
 
 import os
 import argparse
-import rospkg
+import subprocess
 from ros_model_generator.rosmodel_generator import RosModelGenerator
-
+import rospkg
+#import ament_index_python 
 from haros.extractor import NodeExtractor, RoscppExtractor, RospyExtractor
 from haros.metamodel import Node, Package, RosName, SourceFile
 from haros.launch_parser import LaunchParser, LaunchParserError, NodeTag
 from haros.cmake_parser import RosCMakeParser
 from bonsai.analysis import CodeQuery
+
 try:
     from bonsai.cpp.clang_parser import CppAstParser
 except ImportError:
@@ -35,62 +37,29 @@ from bonsai.py.py_parser import PyAstParser
 class RosExtractor():
   def launch(self):
     self.parse_arg()
-
-    #FIND WORKSPACE: 
-    #Fixme: the env variable ROS_PACKAGE_PATH is not the best way to extract the workspace path
-    ros_pkg_path = os.environ.get("ROS_PACKAGE_PATH")
-    ws = ros_pkg_path[:ros_pkg_path.find("/src:")]
+    ws = self.args.worspace_path
 
     #BONSAI PARSER
     parser = CppAstParser(workspace = ws)
-    parser.set_library_path("/usr/lib/llvm-4.0/lib")
-    parser.set_standard_includes("/usr/lib/llvm-4.0/lib/clang/4.0.0/include")
+    parser.set_library_path("/usr/lib/llvm-10/lib")
+    parser.set_standard_includes("/usr/lib/llvm-10/lib/clang/10.0.0/include")
     db_dir = os.path.join(ws, "build")
     if os.path.isfile(os.path.join(db_dir, "compile_commands.json")):
         parser.set_database(db_dir)
-
     if (self.args.node):
         self.extract_node(self.args.name, self.args.name, self.args.package_name, None, ws, None)
- 
-    if (self.args.launch):
-        pkg = Package(self.args.package_name)
-        rospack = rospkg.RosPack()
-        pkg.path = rospack.get_path(self.args.package_name)
-        relative_path = "launch/"
-        for root, dirs, files in os.walk(pkg.path):
-            for file in files:
-                if file.endswith(self.args.name):
-                    relative_path = root.replace("/"+pkg.path,"")
-        source = SourceFile(self.args.name,relative_path,pkg)
-        pkgs = {pkg.id: pkg}
-        launch_parser = LaunchParser(pkgs = pkgs)
-        rossystem = ros_system(self.args.name.replace(".launch",""))
-        try:
-            source.tree = launch_parser.parse(source.path)
-            for node in source.tree.children:
-                if isinstance(node,NodeTag):
-                    name = node.attributes["name"]
-                    node_name = node.attributes["type"]
-                    node_pkg = node.attributes["pkg"]
-                    try:
-                        ns = node.attributes["ns"]
-                    except:
-                        ns=None
-                    self.extract_node(name,node_name,node_pkg,ns,ws,rossystem)
-        except LaunchParserError as e:
-            print("Parsing error in %s:\n%s",source.path, str(e))
-        system_str = rossystem.save_model(self.args.model_path)
-        if self.args.output:
-            print(system_str)
-
   def extract_node(self, name, node_name, pkg_name, ns, ws, rossystem):
         pkg = Package(pkg_name)
-        rospack = rospkg.RosPack()
-        pkg.path = rospack.get_path(pkg_name)
+        if os.environ.get("ROS_VERSION") == "1":
+          rospack = rospkg.RosPack()
+          pkg.path = rospack.get_path(pkg_name)
+        elif os.environ.get("ROS_VERSION") == "2":
+          #pkg.path = ament_index_python.get_resource('package', pkg_name) 
+          cmd=["bash",ws+"/install/setup.bash","&&","ros2", "pkg", "prefix", pkg_name]
+          pkg.path= str(subprocess.check_output(cmd))
         roscomponent = None
         #HAROS NODE EXTRACTOR
         node = Node(node_name, pkg, rosname=RosName(node_name))
-
         srcdir = pkg.path[len(ws):]
         srcdir = os.path.join(ws, srcdir.split(os.sep, 1)[0])
         bindir = os.path.join(ws, "build")
@@ -223,6 +192,7 @@ class RosExtractor():
     parser.add_argument('--output', help='print the model output')
     parser.add_argument('--package', required=True, dest='package_name')
     parser.add_argument('--name', required=True, dest='name')
+    parser.add_argument('--ws', required=True, dest='worspace_path')
     self.args = parser.parse_args()
 
 
@@ -254,114 +224,6 @@ class ros_component:
         self.actsrvs.append(RosInterface(name,ref))
     if interface_type == "actcls":
         self.actcls.append(RosInterface(name,ref))
-
-class ros_system:
-  def __init__(self, name):
-    self.name = name
-    self.components = []
-
-  def add_component(self, component):
-    self.components.append(component)
-
-  def save_model(self, model_path):
-    system_model_str = "RosSystem { Name "+self.name+"\n"
-    if len(self.components)>0:
-        cout_c = len(self.components)
-        system_model_str+="    RosComponents ( \n"
-        for comp in self.components:
-            pubs = comp.pubs
-            subs = comp.subs
-            srvsrvs = comp.srvsrvs
-            srvcls = comp.srvcls
-            actsrvs = comp.actsrvs
-            actcls = comp.actcls
-            if comp.ns is not None:
-                system_model_str+="        ComponentInterface { name '"+str(comp.name)+"' NameSpace '"+str(comp.ns)+"' \n" 
-            else:
-                system_model_str+="        ComponentInterface { name '"+comp.name+"' \n" 
-            if len(pubs) > 0:
-                system_model_str+="            RosPublishers{\n"
-                count = len(pubs)
-                for pub in pubs:
-                    if ((pub.name.startswith('/')) or (comp.ns is None)):
-                        system_model_str+="                RosPublisher '"+pub.name+"' { RefPublisher '"+pub.ref+"'}"
-                    else:
-                        system_model_str+="                RosPublisher '"+comp.ns+pub.name+"' { RefPublisher '"+pub.ref+"'}"
-                    count = count -1
-                    if count > 0:
-                        system_model_str+=",\n"
-                    else:
-                        system_model_str+="}\n"
-            if len(subs) > 0:
-                system_model_str+="            RosSubscribers{\n"
-                count = len(subs)
-                for sub in subs:
-                    if ((sub.name.startswith('/')) or (comp.ns is None)):
-                        system_model_str+="                RosSubscriber '"+sub.name+"' { RefSubscriber '"+sub.ref+"'}"
-                    else:
-                        system_model_str+="                RosSubscriber '"+comp.ns+sub.name+"' { RefSubscriber '"+sub.ref+"'}"
-                    count = count -1
-                    if count > 0:
-                        system_model_str+=",\n"
-                    else:
-                        system_model_str+="}\n"
-            if len(srvsrvs) > 0:
-                system_model_str+="            RosSrvServers{\n"
-                count = len(srvsrvs)
-                for srv in srvsrvs:
-                    if ((srv.name.startswith('/')) or (comp.ns is None)):
-                        system_model_str+="                RosServiceServer '"+srv.name+"' { RefServer '"+srv.ref+"'}"
-                    else:
-                        system_model_str+="                RosServiceServer '"+comp.ns+srv.name+"' { RefServer '"+srv.ref+"'}"
-                    count = count -1
-                    if count > 0:
-                        system_model_str+=",\n"
-                    else:
-                        system_model_str+="}\n"
-            if len(srvcls) > 0:
-                system_model_str+="            RosSrvClients{\n"
-                count = len(srvcls)
-                for srv in srvcls:
-                    if ((srv.name.startswith('/')) or (comp.ns is None)):
-                        system_model_str+="                RosServiceClient '"+srv.name+"' { RefClient '"+srv.ref+"'}"
-                    else:
-                        system_model_str+="                RosServiceClient '"+comp.ns+srv.name+"' { RefClient '"+srv.ref+"'}"
-                    count = count -1
-                    if count > 0:
-                        system_model_str+=",\n"
-                    else:
-                        system_model_str+="}\n"
-            if len(actsrvs) > 0:
-                system_model_str+="            RosActionServers{\n"
-                count = len(actsrvs)
-                for act in actsrvs:
-                    system_model_str+="                RosActionServer '"+str(act.name)+"' { RefServer '"+str(act.ref)+"'}"
-                    count = count -1
-                    if count > 0:
-                        system_model_str+=",\n"
-                    else:
-                        system_model_str+="}\n"
-            if len(actcls) > 0:
-                system_model_str+="            RosActionClients{\n"
-                count = len(actcls)
-                for act in actcls:
-                    system_model_str+="                RosActionClient '"+str(act.name)+"' { RefClient '"+str(act.ref)+"'}"
-                    count = count -1
-                    if count > 0:
-                        system_model_str+=",\n"
-                    else:
-                        system_model_str+="}\n"
-            cout_c = cout_c -1
-            if cout_c > 0:
-                system_model_str+="},\n"
-            else:
-                system_model_str+="}\n"
-        system_model_str+=")"
-    system_model_str+="}"
-    text_file = open(os.path.join(model_path, self.name+".rossystem"), "w")
-    text_file.write(system_model_str)
-    text_file.close()
-    return system_model_str
 
 def main(argv = None):
     extractor = RosExtractor()

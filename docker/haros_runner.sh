@@ -12,41 +12,57 @@
 
 # scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-cd "${5}" || exit # path to the catkin workspace
-source devel/setup.bash
-
 if [ "$#" -eq 6 ]; then
    cd "${5}"/src
    git clone "${6}"
    cd "${5}"
 fi
 
+cd "${5}"
 
-rosdep install -y -i -r --from-path src
-
-if [[ ${3} = 'launch' ]];
+if [ -n $ROS_VERSION ]
 then
-   (cd src && "${scripts_dir}"/setup_ws_depends.sh "$1")
-
-   "${scripts_dir}"/../catkin/bin/catkin_make_isolated --only-pkg-with-deps "$1" --continue-on-failure -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-4.0 --merge
-
-   mkdir build 2>/dev/null && touch build/compile_commands.json
-   cat build_isolated/*/compile_commands.json >> build/compile_commands.json
-   sed -i -e 's/\]\[/\,/g' build/compile_commands.json
-   launch_path="$( find src -name "$2" )"
-
-   # Get the output of roslaunch-dump
-   dump="$( python "${scripts_dir}"/roslaunch-dump "${launch_path}" )"
-
-   # Replace the launch file by the output of roslaunch-dump
-   echo "${dump}" > "${launch_path}"
-
+  if [ $ROS_VERSION == "1" ]
+  then
+    source devel/setup.bash
+    rosdep install -y -i -r --from-path src
+    catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  elif [ $ROS_VERSION == "2" ]
+  then
+    source install/setup.bash
+    rosdep install -y -i -r --from-path src
+    colcon build
+  else
+    echo "ROS version not supported"
+    exit
+  fi
 else
-   catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  echo "ROS installation not found"
 fi
 
 haros init
-# python "${scripts_dir}"/ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}"
-python /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}"
 
+if [ -n $PYTHON_VERSION ]
+then
+  if [ $PYTHON_VERSION == "2" ]
+  then
+    python /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}" --ws "${5}"
+  elif [ $PYTHON_VERSION == "3" ]
+  then
+    python3 /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}" --ws "${5}"
+  else
+    echo "Python version not supported"
+    exit
+  fi
+else
+  echo "Python setup not found"
+fi
+
+echo "###########"
+echo "~~~~~~~~~~~"
+echo "Print of the model: $2.ros:"
+echo "~~~~~~~~~~~"
 cat "${4}"/"$2".ros
+echo ""
+echo "~~~~~~~~~~~"
+echo "###########"

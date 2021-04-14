@@ -1,14 +1,16 @@
 # Use an official Python runtime as a parent image
 FROM ros:melodic
 
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 RUN apt-get update && apt upgrade -y && apt-get install -y \
     cppcheck \
     cccc \
-    clang-4.0 \
+    clang-10 \
     git \
-    libclang-4.0-dev \
+    libclang-10-dev \
     python-pip \
-    llvm-4.0-dev \
+    llvm-10-dev \
     wget \
     netbase \
     libmagic-dev
@@ -16,33 +18,35 @@ RUN apt-get update && apt upgrade -y && apt-get install -y \
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/llvm-4.0/lib
 
 RUN pip install --upgrade pip
-RUN pip install -Iv clang==4.0
+RUN pip install -Iv clang==10.0.1
 RUN pip install -e git+https://github.com/timtadh/pyflwor.git#egg=pyflwor
-RUN pip install -e git+https://github.com/ipa-nhg/ros_model_parser.git@Refactor#egg=ros_model_parser
-RUN pip install haros==3.9.3
+RUN pip install -e git+https://github.com/ipa320/ros_model_parser.git#egg=ros_model_parser
+RUN pip install haros
 RUN pip install bonsai-code
 
 RUN apt-get update && apt-get install -y ros-melodic-desktop
 
 SHELL ["bash", "-c"]
 
-RUN mkdir -p ~/catkin_ws/src
+RUN mkdir -p /root/ws/src
 
 # Set the working directory
 WORKDIR .
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-4.0/bin/clang++
 
-RUN source /opt/ros/melodic/setup.bash;\
- cd ~/catkin_ws/src;\
+RUN source /opt/ros/$ROS_DISTRO/setup.bash;\
+ cd /root/ws/src;\
  catkin_init_workspace;\
- cd ~/catkin_ws;\
+ cd /root/ws;\
  catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1;\
- source ~/catkin_ws/devel/setup.bash; \
+ source /root/ws/devel/setup.bash; \
  haros init
 
-COPY ./haros_runner.sh /
-COPY ./ros_model_extractor.py /
+ENV PYTHON_VERSION 2
+
+COPY haros_runner.sh /
+COPY ros_model_extractor.py /
 
 EXPOSE 4000
 

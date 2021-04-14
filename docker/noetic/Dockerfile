@@ -21,29 +21,33 @@ RUN pip3 install --upgrade pip
 RUN pip3 install -Iv clang==10.0.1
 RUN pip3 install -e git+https://github.com/timtadh/pyflwor.git#egg=pyflwor
 RUN pip3 install -e git+https://github.com/ipa320/haros.git@ros2#egg=haros
+RUN pip3 install -e git+https://github.com/ipa320/ros_model_parser.git#egg=ros_model_parser
 RUN pip3 install bonsai-code
 
 RUN apt-get update && apt-get install -y ros-noetic-desktop
 
 SHELL ["bash", "-c"]
 
-RUN mkdir -p ~/catkin_ws/src
+RUN mkdir -p /root/ws/src
 
 # Set the working directory
 WORKDIR .
 
 ENV CMAKE_CXX_COMPILER /usr/lib/llvm-10/bin/clang++
 
-RUN source /opt/ros/noetic/setup.bash;\
- cd ~/catkin_ws/src;\
+RUN source /opt/ros/$ROS_DISTRO/setup.bash;\
+ cd /root/ws/src;\
  catkin_init_workspace;\
- cd ~/catkin_ws;\
+ cd /root/ws;\
  catkin_make -DCMAKE_EXPORT_COMPILE_COMMANDS=1;\
- source ~/catkin_ws/devel/setup.bash; \
+ source /root/ws/devel/setup.bash; \
  haros init
 
-COPY haros_runner_py3.sh /
-COPY ros_model_extractor_py3.py /
+RUN apt-get install -y python-is-python3
+ENV PYTHON_VERSION 3
+
+COPY haros_runner.sh /
+COPY ros_model_extractor.py /
 
 EXPOSE 4000
 

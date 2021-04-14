@@ -17,6 +17,6 @@ Call the ros-model extractor plugin, remember you have to also clone the reposit
 For example:
 
 ```
-[sudo] docker run -it haros_foxy:latest /haros_runner_ros2.sh sick_scan2 sick_generic_caller node . /root/ws https://github.com/SICKAG/sick_scan2
+[sudo] docker run -it haros_foxy:latest /haros_runner.sh sick_scan2 sick_generic_caller node . /root/ws https://github.com/SICKAG/sick_scan2
 ```
 

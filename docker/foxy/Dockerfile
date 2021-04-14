@@ -21,6 +21,7 @@ RUN pip3 install --upgrade pip
 RUN pip3 install -Iv clang==10.0.1
 RUN pip3 install -e git+https://github.com/timtadh/pyflwor.git#egg=pyflwor
 RUN pip3 install -e git+https://github.com/ipa320/haros.git@ros2#egg=haros
+RUN pip3 install -e git+https://github.com/ipa320/ros_model_parser.git#egg=ros_model_parser
 RUN pip3 install bonsai-code
 
 SHELL ["bash", "-c"]
@@ -39,11 +40,11 @@ RUN source /opt/ros/$ROS_DISTRO/setup.bash;\
  haros init
 
 RUN apt-get install -y python-is-python3
+ENV PYTHON_VERSION 3
 
-COPY haros_runner_ros2.sh /
-COPY ros_model_extractor_ros2.py /
+COPY haros_runner.sh /
+COPY ros_model_extractor.py /
 
 EXPOSE 4000
 
 CMD []
-
