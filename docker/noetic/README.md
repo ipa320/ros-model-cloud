@@ -11,7 +11,7 @@ cd path-to-ros-model-cloud-repo/docker
 Call the ros-model extractor plugin, remember you have to also clone the repository to be analysed:
 
 ```
-[sudo] docker run -it haros_noetic:latest /haros_runner.sh *package_name* *node_name* *type* *path_to_resulted_model* *workspace_path* *github_repository*
+[sudo] docker run -it haros_noetic:latest /haros_runner.sh *package_name* *node_name* *type* *path_to_resulted_model* *workspace_path* *github_repository* *branch*
 ```
 
 For example:

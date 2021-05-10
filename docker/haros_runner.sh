@@ -7,6 +7,7 @@
 #   4: Path to the folder where the resulting model files should be stored
 #   5: Path to the ROS workspace 
 #   (optional) 6: Http address link of the Git repository 
+#   (optional) 7: Branch for the Git repository 
 # Returns:
 #   (None)
 
@@ -18,8 +19,16 @@ if [ "$#" -eq 6 ]; then
    cd "${5}"
 fi
 
+if [ "$#" -eq 7 ]; then
+   cd "${5}"/src
+   git clone "${6}" -b "${7}"
+   cd "${5}"
+fi
+
 cd "${5}"
 
+echo ""
+echo "## Install ROS pkgs dependencies ##"
 if [ -n $ROS_VERSION ]
 then
   if [ $ROS_VERSION == "1" ]
@@ -32,6 +41,9 @@ then
     source install/setup.bash
     rosdep install -y -i -r --from-path src
     colcon build
+    path_to_src_code=$(colcon list | grep $1 | awk '{ print $2}')
+    path_to_src_code="/root/ws/$path_to_src_code"
+    echo $path_to_src_code
   else
     echo "ROS version not supported"
     exit
@@ -40,16 +52,26 @@ else
   echo "ROS installation not found"
 fi
 
+echo ""
+
+#tree ${5}
+
+echo "## Init HAROS ##"
+
 haros init
 
+echo ""
+echo "## Call the HAROS plugin to extract the ros-models ##"
 if [ -n $PYTHON_VERSION ]
 then
   if [ $PYTHON_VERSION == "2" ]
   then
-    python /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}" --ws "${5}"
+    python /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}" --ws "${5}">> extractor.log
+    cat extractor.log
   elif [ $PYTHON_VERSION == "3" ]
   then
-    python3 /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}" --ws "${5}"
+    python3 /ros_model_extractor.py --package "$1" --name "$2" --"${3}" --model-path "${4}" --ws "${5}" --path-to-src "$path_to_src_code">> extractor.log
+    cat extractor.log 
   else
     echo "Python version not supported"
     exit
