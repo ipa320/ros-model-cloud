@@ -49,68 +49,67 @@ class RosExtractor():
     if (self.args.node):
         self.extract_node(self.args.name, self.args.name, self.args.package_name, None, ws, None)
   def extract_node(self, name, node_name, pkg_name, ns, ws, rossystem):
-        pkg = Package(pkg_name)
-        if os.environ.get("ROS_VERSION") == "1":
-          rospack = rospkg.RosPack()
-          pkg.path = rospack.get_path(pkg_name)
-        elif os.environ.get("ROS_VERSION") == "2":
-          #pkg.path = ament_index_python.get_resource('package', pkg_name) 
-          cmd=["bash",ws+"/install/setup.bash","&&","ros2", "pkg", "prefix", pkg_name]
-          pkg.path= str(subprocess.check_output(cmd))
-        roscomponent = None
-        #HAROS NODE EXTRACTOR
-        node = Node(node_name, pkg, rosname=RosName(node_name))
-        srcdir = pkg.path[len(ws):]
-        srcdir = os.path.join(ws, srcdir.split(os.sep, 1)[0])
-        bindir = os.path.join(ws, "build")
-        #HAROS CMAKE PARSER
-        parser = RosCMakeParser(srcdir, bindir, pkgs = [pkg])
-        model_str = ""
-        if os.path.isfile(os.path.join(pkg.path, "CMakeLists.txt")):
-            parser.parse(os.path.join(pkg.path, "CMakeLists.txt"))
-            for target in parser.executables.values():
-                if target.output_name == node_name:
-                    for file_in in target.files:
-                        full_path = file_in
-                        relative_path = full_path.replace(pkg.path+"/","").rpartition("/")[0]
-                        file_name = full_path.rsplit('/', 1)[-1]
-                        source_file = SourceFile(file_name, relative_path , pkg)
-                        node.source_files.append(source_file)
-            if node.language == "cpp":
-                parser = CppAstParser(workspace = ws)
-                analysis = RoscppExtractor(pkg, ws)
-            if node.language == "py":
-                parser = PyAstParser(workspace = ws)
-                analysis = RospyExtractor(pkg, ws)
-            #node.source_tree = parser.global_scope
-            for sf in node.source_files:
-                try:
-                    if parser.parse(sf.path) is not None:
-                        # ROS MODEL EXTRACT PRIMITIVES
-                        if node.language == "py":
-                            node_name=node_name.replace(".py","")
-                        RosModel = RosModelGenerator()
-                        RosModel.setPackageName(pkg.name)
-                        RosModel.setArtifactName(name)
-                        RosModel.setNodeName(node_name)
-                        roscomponent = ros_component(name, ns)
-                        try:
-                            self.extract_primitives(node, parser, analysis, RosModel, roscomponent, pkg_name, node_name, name)
-                            # SAVE ROS MODEL
-                            model_str = RosModel.dump_ros_model(self.args.model_path+"/"+name+".ros")
-                        except:
-                            pass
-                except:
-                    pass
-            if rossystem is not None and roscomponent is not None:
-                rossystem.add_component(roscomponent)
-        if self.args.output:
-            print(model_str)
+    self.pkg = Package(pkg_name)
+    if os.environ.get("ROS_VERSION") == "1":
+      rospack = rospkg.RosPack()
+      self.pkg.path = rospack.get_path(pkg_name)
+    elif os.environ.get("ROS_VERSION") == "2":
+      self.pkg.path= self.args.path_to_src
+    roscomponent = None
+    #HAROS NODE EXTRACTOR
+    node = Node(node_name, self.pkg, rosname=RosName(node_name))
+    srcdir = self.pkg.path[len(ws):]
+    srcdir = os.path.join(ws, srcdir.split(os.sep, 1)[0])
+    bindir = os.path.join(ws, "build")
+    #HAROS CMAKE PARSER
+    parser = RosCMakeParser(srcdir, bindir, pkgs = [self.pkg])
+    model_str = ""
+    if os.path.isfile(os.path.join(self.pkg.path, "CMakeLists.txt")):
+        parser.parse(os.path.join(self.pkg.path, "CMakeLists.txt"))
+        for target in parser.executables.values():
+            if target.output_name == node_name:
+                for file_in in target.files:
+                    full_path = file_in
+                    relative_path = full_path.replace(self.pkg.path+"/","").rpartition("/")[0]
+                    file_name = full_path.rsplit('/', 1)[-1]
+                    source_file = SourceFile(file_name, relative_path , self.pkg)
+                    node.source_files.append(source_file)
+        if node.language == "cpp":
+            parser = CppAstParser(workspace = ws)
+            analysis = RoscppExtractor(self.pkg, ws)
+        if node.language == "py":
+            parser = PyAstParser(workspace = ws)
+            analysis = RospyExtractor(self.pkg, ws)
+        #node.source_tree = parser.global_scope
+        for sf in node.source_files:
+            try:
+                if parser.parse(sf.path) is not None:
+                    # ROS MODEL EXTRACT PRIMITIVES
+                    if node.language == "py":
+                        node_name=node_name.replace(".py","")
+                    RosModel = RosModelGenerator()
+                    RosModel.setPackageName(self.pkg.name)
+                    RosModel.setArtifactName(name)
+                    RosModel.setNodeName(node_name)
+                    roscomponent = ros_component(name, ns)
+                    try:
+                        self.extract_primitives(node, parser, analysis, RosModel, roscomponent, pkg_name, node_name, name)
+                        # SAVE ROS MODEL
+                        model_str = RosModel.dump_ros_model(self.args.model_path+"/"+name+".ros")
+                    except:
+                        pass
+            except:
+                pass
+        if rossystem is not None and roscomponent is not None:
+            rossystem.add_component(roscomponent)
+    if self.args.output:
+        print(model_str)
 
   def extract_primitives(self, node, parser, analysis, RosModel, roscomponent, pkg_name, node_name, art_name):
         gs = parser.global_scope
         node.source_tree = parser.global_scope
         if node.language == "cpp":
+            #print(CodeQuery(gs).all_calls.get())
             for call in (CodeQuery(gs).all_calls.where_name("SimpleActionServer").get()):
                 if len(call.arguments) > 0:
                   name = analysis._extract_action(call)
@@ -193,6 +192,7 @@ class RosExtractor():
     parser.add_argument('--package', required=True, dest='package_name')
     parser.add_argument('--name', required=True, dest='name')
     parser.add_argument('--ws', required=True, dest='worspace_path')
+    parser.add_argument('--path-to-src', required=False, dest='path_to_src')
     self.args = parser.parse_args()
 
 
