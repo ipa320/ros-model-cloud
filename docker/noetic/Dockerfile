@@ -24,7 +24,8 @@ RUN pip3 install -e git+https://github.com/ipa320/haros.git@ros2#egg=haros
 RUN pip3 install -e git+https://github.com/ipa320/ros_model_parser.git#egg=ros_model_parser
 RUN pip3 install bonsai-code
 
-RUN apt-get update && apt-get install -y ros-noetic-desktop
+RUN apt-get update && apt-get install -y ros-noetic-desktop && apt upgrade -y
+
 
 SHELL ["bash", "-c"]
 

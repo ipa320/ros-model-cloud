@@ -24,7 +24,7 @@ RUN pip install -e git+https://github.com/ipa320/ros_model_parser.git#egg=ros_mo
 RUN pip install haros
 RUN pip install bonsai-code
 
-RUN apt-get update && apt-get install -y ros-melodic-desktop
+RUN apt-get update && apt-get install -y ros-melodic-desktop && apt upgrade -y
 
 SHELL ["bash", "-c"]
 
