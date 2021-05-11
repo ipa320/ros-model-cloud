@@ -40,10 +40,15 @@ then
   then
     source install/setup.bash
     rosdep install -y -i -r --from-path src
-    colcon build
-    path_to_src_code=$(colcon list | grep $1 | awk '{ print $2}')
+    colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    source /root/ws/install/setup.bash
+    colcon list > /tmp/colcon_list.txt
+    path_to_src_code=$(cat /tmp/colcon_list.txt |  grep "^$1" | awk '{ print $2}')
+    if [ -z "$path_to_src_code" ]; then
+      echo "\n ** ERROR: Package ${1} not found in the workspace **"
+      exit
+    fi
     path_to_src_code="/root/ws/$path_to_src_code"
-    echo $path_to_src_code
   else
     echo "ROS version not supported"
     exit
