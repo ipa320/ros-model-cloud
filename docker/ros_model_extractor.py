@@ -46,6 +46,8 @@ class RosExtractor():
     db_dir = os.path.join(ws, "build")
     if os.path.isfile(os.path.join(db_dir, "compile_commands.json")):
         parser.set_database(db_dir)
+    else:
+      print("The compile_commands.json file can't be found")
     if (self.args.node):
         self.extract_node(self.args.name, self.args.name, self.args.package_name, None, ws, None)
   def extract_node(self, name, node_name, pkg_name, ns, ws, rossystem):
@@ -98,6 +100,8 @@ class RosExtractor():
                         model_str = RosModel.dump_ros_model(self.args.model_path+"/"+name+".ros")
                     except:
                         pass
+                else:
+                  print("The model couldn't be extracted")
             except:
                 pass
         if rossystem is not None and roscomponent is not None:
@@ -148,6 +152,28 @@ class RosExtractor():
                   srv_type = analysis._extract_message_type(call)
                   RosModel.addServiceClient(name, srv_type.replace("/",".").replace("Response",""))
                   roscomponent.add_interface(name,"srvcls", pkg_name+"."+art_name+"."+node_name+"."+name)
+            #ROS2
+            for call in (CodeQuery(gs).all_calls.get()):
+                if "Publisher" in str(call):
+                  #print(call)
+                  if len(call.arguments) > 1:
+                    name = analysis._extract_topic(call, topic_pos=0)
+                    msg_type = analysis._extract_message_type(call)
+                    queue_size = analysis._extract_queue_size(call, queue_pos=1)
+                    if name!="?" or msg_type!="?":
+                      RosModel.addPublisher(name, msg_type.replace("/","."))
+                      roscomponent.add_interface(name,"pubs", pkg_name+"."+art_name+"."+node_name+"."+name)
+            for call in (CodeQuery(gs).all_calls.get()):
+                if "Subscription" in str(call):
+                  #print(call)
+                  if len(call.arguments) > 1:
+                    name = analysis._extract_topic(call, topic_pos=0)
+                    msg_type = analysis._extract_message_type(call)
+                    queue_size = analysis._extract_queue_size(call, queue_pos=1)
+                    if name!="?" or msg_type!="?":
+                      RosModel.addSubscriber(name, msg_type.replace("/","."))
+                      roscomponent.add_interface(name,"subs", pkg_name+"."+art_name+"."+node_name+"."+name)
+
         if node.language == "py":
             msgs_list=[]
             for i in parser.imported_names_list:
