@@ -1,7 +1,7 @@
 import { h, Component } from "preact";
 import Header from "./components/Header";
-import 'materialize-css/dist/js/materialize';
-import 'materialize-css/dist/css/materialize.css';
+//import 'materialize-css/dist/js/materialize';
+//import 'materialize-css/dist/css/materialize.css';
 import './styles/style.css';
 import FormTabs from './components/forms/FormTabs';
 import { Row, Col } from 'react-materialize';

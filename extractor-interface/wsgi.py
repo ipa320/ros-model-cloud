@@ -1,5 +1,5 @@
 from flaskr import create_app
-from gevent import pywsgi
+from gevent.pywsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
 
 app = create_app()

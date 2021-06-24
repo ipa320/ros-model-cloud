@@ -143,7 +143,7 @@ class MsgsExtractorRunner(ExtractorRunner):
         # Send the logs
         for line in iter(extractor_process.stdout.readline, ''):
             yield self._log_event(line)
-            print line
+            print(line)
 
         extractor_process.wait()
 
@@ -182,7 +182,7 @@ class NodeExtractorRunner(ExtractorRunner):
         # Send the logs
         for line in iter(extractor_process.stdout.readline, ''):
             yield self._log_event(line)
-            print line
+            print(line)
 
         extractor_process.wait()
 
@@ -239,7 +239,7 @@ class LaunchExtractorRunner(ExtractorRunner):
             if failed_package:
                 failed_packages.append(failed_package.group(1))
             yield self._log_event(line)
-            print line
+            print(line)
 
         extractor_process.wait()
 

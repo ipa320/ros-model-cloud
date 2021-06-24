@@ -82,7 +82,7 @@ def websocket(ws):
                         ws.send(json.dumps(message))
 
             except ExtractorInvalidUsage as error:
-                print error.message
+                print(error.message)
                 ws.send(error.to_ws_json())
 
             for runner in extractor_runners:
