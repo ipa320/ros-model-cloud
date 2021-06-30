@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install  -y \
 RUN pip3 install gitpython
 RUN pip3 install psutil
 RUN apt-get install -y gunicorn
-
 #RUN pip install gevent
 #RUN apt-get install -y python-gevent
 #RUN pip install mod-wsgi
@@ -39,7 +38,11 @@ RUN pip install -Ir requirements.txt
 COPY package*.json ./
 RUN npm install -g parcel
 RUN npm install materialize-css@next
+RUN npx browserslist@latest --update-db
+RUN npm install babel-plugin-transform-class-properties --save-dev
+
 RUN npm install
+
 COPY . ./
 RUN npm run build
 
