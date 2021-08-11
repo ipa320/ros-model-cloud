@@ -3,8 +3,9 @@ import API from './../api';
 import {Button, Row} from 'react-materialize';
 import Observer from '../observer'
 import { eventTypes, errorMessages } from "../constants";
+import React from 'react';
 
-export default class Models extends Component {
+export default class Models extends React.Component {
 
     constructor(props) {
         super(props);
@@ -49,12 +50,12 @@ export default class Models extends Component {
         Observer.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_EXTRACTION_DONE, this.showModels);
     }
 
-    render(props, {models, showModels}) {
-        return showModels ? <div class="model-code">
-            {models.length > 0 && <Row>
+    render(props) {
+        return this.state.showModels ? <div class="model-code">
+            {this.state.models.length > 0 && <Row>
                 <Button onClick={this.downloadFiles}>Download the files</Button>
             </Row>}
-            {models.map(model => <div>
+            {this.state.models.map(model => <div>
                 <h6>{model.file}</h6>
                 <pre>{model.model}</pre>
             </div>)}

@@ -1,13 +1,12 @@
-import {h, Component} from 'preact';
 import Form from "./Form";
 import {Button, Icon, Preloader, Row} from "react-materialize";
 import cuid from 'cuid';
 import {eventTypes, errorMessages} from "../../constants";
 import Observer from '../../observer';
 import API from '../../api'
+import React from 'react';
 
-
-export default class Forms extends Component {
+class Forms extends React.Component {
 
     constructor(props) {
         super(props);
@@ -16,7 +15,14 @@ export default class Forms extends Component {
             loading: false,
             forms: [],
         }
+
+        this.handleEvent = this.handleEvent.bind(this);  
+
     }
+
+    handleEvent(){  
+        console.log(this.props);  
+     }  
 
     defaultFormState = () => {
         const fieldsState = this.props.fields.reduce((prev, curr) => {
@@ -45,15 +51,14 @@ export default class Forms extends Component {
         })
     };
 
-    setValue = (request_id, event) => {
+    setValue = (request_id, target) => {
         this.setState(prevState => {
             return {
                 forms: prevState.forms.map(form => {
                     if (form.request_id !== request_id) {
                         return form
                     }
-
-                    return {...form, [event.target.name]: event.target.value}
+                    return {...form, [target.name]: target.value}
                 })
             }
         })
@@ -126,29 +131,30 @@ export default class Forms extends Component {
         Observer.unsubscribe(eventTypes.SOCKET_ON_CLOSE, this.stopLoading);
     }
 
-    render({fields}, {forms, loading }) {
+    render() {
 
-        const removeDisabled = forms.length < 2;
+        const removeDisabled = this.state.forms.length < 2;
 
         return <div>
-            {loading && <Preloader size="big" flashing/>}
-            {forms.map(form => {
+            {this.state.loading && <Preloader size="big" flashing/>}
+            {this.state.forms.map(form => {
                 return <Form
                     removeDisabled={removeDisabled}
                     removeForm={this.removeForm}
                     values={form}
                     setValue={this.setValue}
-                    loading={loading}
-                    fields={fields}
+                    loading={this.state.loading}
+                    fields={this.props.fields}
                 />
             })}
             <Row className='float-right'>
-                <Button disabled={loading} onClick={this.addForm}> <Icon> add </Icon> </Button>
+                <Button disabled={this.state.loading} onClick={this.addForm}> <Icon> add </Icon> </Button>
             </Row>
             <Row>
-                <Button waves="light" disabled={loading} onClick={this.handleSubmit}> Submit <Icon
+                <Button waves="light" disabled={this.state.loading} onClick={this.handleSubmit}> Submit <Icon
                     right> send </Icon></Button>
             </Row>
         </div>
     }
 }
+export default Forms;

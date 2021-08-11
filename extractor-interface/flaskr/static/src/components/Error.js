@@ -2,9 +2,10 @@ import {h, Component} from "preact";
 import { Row } from 'react-materialize';
 import Observer from '../observer';
 import {eventTypes} from "../constants";
+import React from 'react';
 
 
-export default class Error extends Component {
+export default class Error extends React.Component {
 
     constructor(props){
         super(props);
@@ -38,9 +39,9 @@ export default class Error extends Component {
         Observer.unsubscribe(eventTypes.FILE_DOWNLOAD_ERROR, this.showError);
     }
 
-    render(props, {error}) {
+    render(props) {
         return <Row>
-            <div className="flash">{error}</div>
+            <div className="flash">{this.state.error}</div>
         </Row>
     }
 }

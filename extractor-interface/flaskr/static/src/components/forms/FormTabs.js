@@ -1,8 +1,8 @@
-import { h, Component } from 'preact';
 import { Tabs, Tab } from "react-materialize";
 import FormsWrapper from "./FormsWrapper";
+import React from 'react';
 
-export default class FormTabs extends Component {
+export default class FormTabs extends React.Component {
 
     commonFormFields = [
         {name: 'repository', label: 'Git repository'},

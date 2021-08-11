@@ -1,8 +1,9 @@
 import {h, Component} from "preact";
 import Observer from '../observer';
 import {eventTypes} from "../constants";
+import React from 'react';
 
-export default class Logs extends Component {
+export default class Logs extends React.Component {
 
     constructor(props){
         super(props);
@@ -54,9 +55,9 @@ export default class Logs extends Component {
         Observer.unsubscribe(eventTypes.SOCKET_ON_MESSAGE_ERRORS, this.onErrorMessage);
     }
 
-    render(props, {logs}) {
+    render() {
         return <div class="log">
-            {logs.map((log) => <div><span>{log}</span></div>)}
+            {this.state.logs.map((log) => <div><span>{log}</span></div>)}
         </div>
     }
 }

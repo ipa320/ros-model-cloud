@@ -4,9 +4,11 @@
 <meta charset="utf-8"/>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <link href="{{ url_for('static', filename='dist/index.css') }}" rel="stylesheet">
+<link rel="icon" href="data:,"/>
 <!--Let browser know website is optimized for mobile-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <section class="content">
-  <div id="root"></div>
-  <script src="{{ url_for('static', filename='dist/index.js') }}" ></script>
+  <div id="root">
+    <script src="static/dist/index.js"></script> 
+  </div>
 </section>

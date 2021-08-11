@@ -1,6 +1,6 @@
-import {h, Component} from "preact";
+import React from 'react';
 
-export default class Header extends Component {
+export default class Header extends React.Component {
 
     render() {
         return <header className="header">

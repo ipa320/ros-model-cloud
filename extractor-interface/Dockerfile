@@ -34,15 +34,14 @@ WORKDIR /root/extractor-interface
 COPY requirements.txt .
 RUN pip install -Ir requirements.txt
 
-
 COPY package*.json ./
 RUN npm install -g parcel
 RUN npm install materialize-css@next
 RUN npx browserslist@latest --update-db
 RUN npm install babel-plugin-transform-class-properties --save-dev
-
 RUN npm install
 
+RUN ls
 COPY . ./
 RUN npm run build
 

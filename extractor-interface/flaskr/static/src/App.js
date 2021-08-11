@@ -1,16 +1,15 @@
-import { h, Component } from "preact";
 import Header from "./components/Header";
-//import 'materialize-css/dist/js/materialize';
-//import 'materialize-css/dist/css/materialize.css';
+import 'materialize-css/dist/js/materialize';
+import 'materialize-css/dist/css/materialize.css';
 import './styles/style.css';
 import FormTabs from './components/forms/FormTabs';
 import { Row, Col } from 'react-materialize';
 import Models from './components/Models';
 import Logs from './components/Logs';
 import Error from './components/Error';
+import React from 'react';
 
-
-export default class App extends Component {
+class App extends React.Component {
 
     render(props) {
         return <div>
@@ -29,3 +28,5 @@ export default class App extends Component {
         </div>
     }
 }
+
+export default App;
