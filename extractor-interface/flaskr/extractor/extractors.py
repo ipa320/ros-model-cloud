@@ -11,12 +11,13 @@ class ExtractorRunner(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, repository, package, request_id, branch_optional):
+    def __init__(self, repository, package, request_id, branch_optional, ros_version):
         # Common for the launch & node extractors
         self.repository = repository.strip()
         self.package = package.strip()
         self.branch_optional = branch_optional.strip()
         self.id = request_id
+        self.ros_version = ros_version
         self.haros_runner_path = os.path.join(os.getcwd(), 'scripts', 'haros_runner.sh')
         self.messages_extractor_path = os.path.join(os.getcwd(), 'scripts', 'messages_generator_to_file.sh')     
 
@@ -57,6 +58,14 @@ class ExtractorRunner(object):
         except GitCommandError:
             return False
 
+    # check if selected Ros version is supported
+    def _check_ros_version(self):
+        versions = ['melodic','noetic','foxy']
+        if self.ros_version in versions:
+          return True
+        else:
+          return False
+
     # Template for the events sent by the websocket
     def _event_template(self, event_type, **kwargs):
 
@@ -89,6 +98,8 @@ class ExtractorRunner(object):
             raise ExtractorInvalidUsage.missing_field("Package")
         if not self._check_remote_repository():
             raise ExtractorInvalidUsage.repository_not_found(payload=self.repository)
+        if not self._check_ros_version():
+            raise ExtractorInvalidUsage.wrong_ros_version(payload=self.ros_version)
 
     # should be implemented by both the node & the launch extractor
     @abstractmethod
@@ -127,6 +138,8 @@ class MsgsExtractorRunner(ExtractorRunner):
         # Path where the model files are stored
         if self.repository!="" and not super(MsgsExtractorRunner, self)._check_remote_repository():
             raise ExtractorInvalidUsage.repository_not_found(payload=self.repository)
+        if not self._check_ros_version():
+            raise ExtractorInvalidUsage.wrong_ros_version(payload=self.ros_version)
 
     def run_analysis(self):
         for message in super(MsgsExtractorRunner, self).run_analysis():
@@ -168,6 +181,8 @@ class NodeExtractorRunner(ExtractorRunner):
 
         if not self.node:
             raise ExtractorInvalidUsage.missing_field("Node name")
+        if not self._check_ros_version():
+            raise ExtractorInvalidUsage.wrong_ros_version(payload=self.ros_version)
 
     def run_analysis(self):
         for message in super(NodeExtractorRunner, self).run_analysis():
@@ -208,6 +223,8 @@ class LaunchExtractorRunner(ExtractorRunner):
 
         if not self.launch:
             raise ExtractorInvalidUsage.missing_field("Launch file name")
+        if not self._check_ros_version():
+            raise ExtractorInvalidUsage.wrong_ros_version(payload=self.ros_version)
 
     # check if the launch file is contained in the repository
     def _launch_file_exists(self):

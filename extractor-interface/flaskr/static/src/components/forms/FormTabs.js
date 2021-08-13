@@ -7,7 +7,9 @@ export default class FormTabs extends React.Component {
     commonFormFields = [
         {name: 'repository', label: 'Git repository'},
         {name: 'branch_optional', label: 'Branch (optional)'},
-        {name: 'package', label: 'Package name'}
+        {name: 'package', label: 'Package name'},
+        {name: 'ros_version', label: 'Ros version (i.e melodic, noetic or foxy)'}
+
     ];
     
     nodeFormFields = [
@@ -23,7 +25,8 @@ export default class FormTabs extends React.Component {
     msgFormFields = [
         {name: 'repository_optional', label: 'Git repository (optional)'},
         {name: 'branch_optional', label: 'Branch (optional)'},
-        {name: 'package', label: 'Package name'}
+        {name: 'package', label: 'Package name'},
+        {name: 'ros_version', label: 'Ros version (i.e melodic, noetic or foxy)'}
     ];
 
     render() {
