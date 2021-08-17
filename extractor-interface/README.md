@@ -25,3 +25,26 @@ sudo docker run -p 4000:4000 -ti haros:latest
 ```
 
 Open on your browser the page: http://localhost:4000/ where the Git repository, node and package names can be set
+
+# Use docker compose
+
+Build the frontend:
+
+```
+sudo docker build --tag=extractor_frontend .
+```
+
+Build the extractors containers:
+```
+git clone https://github.com/ipa320/ros-model-extractors
+cd ros-model-extractors
+sudo docker build --tag=haros_melodic -f melodic/Dockerfile .
+sudo docker build --tag=haros_noetic -f noetic/Dockerfile .
+sudo docker build --tag=haros_foxy -f foxy/Dockerfile .
+```
+
+Start the dockers together:
+```
+cd extractor-interface
+sudo docker-compose up
+```

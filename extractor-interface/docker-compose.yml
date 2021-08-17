@@ -1,0 +1,57 @@
+version: "3"
+networks:
+  extractor_network:
+    driver: bridge
+services:
+  frontend:
+    image: extractor_frontend
+    ports:
+      - "4000:4000"
+    networks:
+      - extractor_network
+    tty: true
+    volumes:
+      - ./../results:/root/results
+    image: haros_melodic
+    command: tail -f /dev/null
+    tty: true
+    ports:
+      - "4001:22"
+    networks:
+      - extractor_network
+    volumes:
+      - ./../results:/root/results
+  noetic:
+    image: haros_noetic
+    command: tail -f /dev/null
+    tty: true
+    networks:
+      - extractor_network
+    volumes:
+      - ./../results:/root/results
+  foxy:
+    image: haros_foxy
+    command: tail -f /dev/null
+    tty: true
+    networks:
+      - extractor_network
+    volumes:
+     - ./../results:/root/results
+
+# https://codeburst.io/direct-connection-to-a-docker-container-with-ssh-56e1d2744ee5
+#  melodic:
+#    image: haros_melodic
+#    command: tail -f /dev/null
+#    build:
+#      context: ./
+#      args:
+#        SSH_PASS: ${SSH_PASS}
+#    restart: always
+#    volumes:
+#      - ./../results:/root/results
+#      - ./docker/sshd_config:/etc/ssh/sshd_config
+#    ports:
+#      - "${HOST_SSH_PORT}:22"
+
+
+
