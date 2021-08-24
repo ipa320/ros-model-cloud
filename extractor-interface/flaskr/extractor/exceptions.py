@@ -6,6 +6,7 @@ NO_FILES_SPECIFIED = template('NO_FILES_SPECIFIED', 422)
 REPOSITORY_NOT_FOUND = template('REPOSITORY_NOT_FOUND', 400)
 MISSING_FIELD = template('MISSING_FIELD', 400)
 WRONG_ROS_VERSION = template('WRONG_ROS_VERSION',400)
+ROS_VERSION_NOT_SUPPORTED = template('ROS_VERSION_NOT_SUPPORTED',400)
 NO_MODEL_GENERATED = template('NO_MODEL_GENERATED', 500)
 LAUNCH_FILE_NOT_FOUND = template('LAUNCH_FILE_NOT_FOUND', 400)
 FAILED_PACKAGES = template('FAILED_PACKAGES', 500)
@@ -36,6 +37,10 @@ class ExtractorInvalidUsage(BaseInvalidUsage):
     @classmethod
     def wrong_ros_version(cls, payload=''):
         return cls(payload=payload, **WRONG_ROS_VERSION)
+
+    @classmethod
+    def ros_version_not_supported(cls, payload=''):
+        return cls(payload=payload, **ROS_VERSION_NOT_SUPPORTED)
 
     @classmethod
     def missing_field(cls, payload):

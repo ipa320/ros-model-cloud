@@ -37,9 +37,6 @@ export default class FormTabs extends React.Component {
             <Tab title="Specifications analysis">
                 <FormsWrapper fields={this.msgFormFields}/>
             </Tab>
-            <Tab title="Launch analysis">
-                <FormsWrapper fields={this.launchFormFields}/>
-            </Tab>
         </Tabs>
     }
 }

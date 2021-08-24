@@ -1,0 +1,70 @@
+version: "3"
+networks:
+  extractor_network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+services:
+  frontend:
+    image: extractor_frontend
+    container_name: frontend
+    hostname: frontend.info.my
+    ports:
+      - "4000:4000"
+    networks:
+      extractor_network:
+        ipv4_address: 172.20.0.2
+    tty: true
+    volumes:
+      - ./results:/home/extractor/results
+  melodic:
+    image: haros_melodic
+    container_name: melodic
+    hostname: melodic.info.my
+    command: bash -c "sudo service ssh start && bash"
+    ports:
+      - "4003:4003"                                                           
+    networks:
+      extractor_network:
+        ipv4_address: 172.20.0.3
+    extra_hosts:
+      - "frontend.info.my:172.20.0.2"
+    depends_on:
+      - frontend
+    tty: true
+    volumes:
+      - ./results:/home/extractor/results
+  noetic:
+    image: haros_noetic
+    container_name: noetic
+    hostname: noetic.info.my
+    command: bash -c "sudo service ssh start && bash"
+    ports:
+      - "4004:4004"                                                           
+    networks:
+      extractor_network:
+        ipv4_address: 172.20.0.4
+    extra_hosts:
+      - "frontend.info.my:172.20.0.2"
+    depends_on:
+      - frontend
+    tty: true
+    volumes:
+      - ./results:/home/extractor/results
+  foxy:
+    image: haros_foxy
+    container_name: foxy
+    hostname: foxy.info.my
+    command: bash -c "sudo service ssh start && bash"
+    ports:
+      - "4005:4005"                                                           
+    networks:
+      extractor_network:
+        ipv4_address: 172.20.0.5
+    extra_hosts:
+      - "frontend.info.my:172.20.0.2"
+    depends_on:
+      - frontend
+    tty: true
+    volumes:
+      - ./results:/home/extractor/results
