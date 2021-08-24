@@ -10,16 +10,14 @@ RUN apt-get update && apt-get install  -y \
     git \
     apache2-dev \
     apache2 \
-    util-linux
+    util-linux \
+    openssh-server
 
-
-#RUN pip3 install --upgrade pip
 RUN pip3 install gitpython
 RUN pip3 install psutil
+RUN pip3 install paramiko
 RUN apt-get install -y gunicorn
-#RUN pip install gevent
-#RUN apt-get install -y python-gevent
-#RUN pip install mod-wsgi
+
 
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 && apt-get install -y nodejs
@@ -27,26 +25,41 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 RUN mkdir -p ~/extractor-interface
 WORKDIR /root/extractor-interface
 
-#COPY flaskr /root/extractor-interface/flaskr
-#COPY wsgi.py /root/extractor-interface/wsgi.py
 
 # Python requirements
-COPY requirements.txt .
+COPY extractor-interface/requirements.txt .
 RUN pip install -Ir requirements.txt
 
-COPY package*.json ./
+COPY extractor-interface/package*.json ./
 RUN npm install -g parcel
 RUN npm install materialize-css@next
 RUN npx browserslist@latest --update-db
 RUN npm install babel-plugin-transform-class-properties --save-dev
 RUN npm install
 
-RUN ls
-COPY . ./
+COPY extractor-interface/ ./
 RUN npm run build
 
 ENV GIT_PYTHON_REFRESH quiet
 
+# SSH CONFIGURATION
+RUN useradd -rm -d /home/extractor/ -s /bin/bash -g root -G sudo -u 1001 extractor
+USER extractor
+WORKDIR /home/extractor
 
+RUN mkdir -p /home/extractor/.ssh/ && \
+    chmod 0700 /home/extractor/.ssh  && \
+    touch /home/extractor/.ssh/authorized_keys && \
+    chmod 600 /home/extractor/.ssh/authorized_keys && \
+    touch /home/extractor/.ssh/config && \
+    chmod 600 /home/extractor/.ssh/config
+
+COPY --chown=extractor:root ssh_config/ /keys/
+RUN cat /keys/ssh_key.pub >> /home/extractor/.ssh/authorized_keys
+RUN cat /keys/config >> /home/extractor/.ssh/config
+####
+#ENTRYPOINT service ssh start && bash
 EXPOSE 4000
+USER root
+WORKDIR /root/extractor-interface
 CMD ["gunicorn", "--bind", "0.0.0.0:4000", "-k", "flask_sockets.worker", "wsgi:app"]

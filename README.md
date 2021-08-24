@@ -19,6 +19,22 @@ git submodule update
 
 #### Using a docker container
 
+
+```
+./setup_helper.sh
+docker-compose up
+
+```
+
+--------
+
+For the old version: [https://github.com/ipa320/ros-model-cloud/tree/v1.0](https://github.com/ipa320/ros-model-cloud/tree/v1.0)
+
+
+### Setup and start the web application
+
+#### Using a docker container
+
 Instructions on installing Docker can be found here:[https://docs.docker.com/install/linux/docker-ce/ubuntu/](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
 
 Build the docker image:

@@ -38,9 +38,9 @@ Build the extractors containers:
 ```
 git clone https://github.com/ipa320/ros-model-extractors
 cd ros-model-extractors
-sudo docker build --tag=haros_melodic -f melodic/Dockerfile .
-sudo docker build --tag=haros_noetic -f noetic/Dockerfile .
-sudo docker build --tag=haros_foxy -f foxy/Dockerfile .
+sudo docker build --tag=haros_melodic -f ros-model-extractors/melodic/Dockerfile --build-arg enable_ssh=true --build-arg path_to_scripts="ros-model-extractors/" . 
+sudo docker build --tag=haros_noetic -f ros-model-extractors/noetic/Dockerfile --build-arg enable_ssh=true --build-arg path_to_scripts="ros-model-extractors/" .
+sudo docker build --tag=haros_foxy -f ros-model-extractors/foxy/Dockerfile --build-arg enable_ssh=true --build-arg path_to_scripts="ros-model-extractors/" .
 ```
 
 Start the dockers together:

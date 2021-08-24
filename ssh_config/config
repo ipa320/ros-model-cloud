@@ -1,0 +1,6 @@
+Host *
+    StrictHostKeyChecking accept-new
+    StrictHostKeyChecking no
+    IdentityFile /keys/id_rsa
+    PermitUserEnvironment yes
+

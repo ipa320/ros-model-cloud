@@ -85,7 +85,7 @@ def websocket(ws):
                 print(error.message)
                 ws.send(error.to_ws_json())
 
-            for runner in extractor_runners:
-                runner.clean_up()
+            #for runner in extractor_runners:
+            #    runner.clean_up()
 
             ws.send(json.dumps(extractor_ws_template('extraction_done')))
