@@ -1,5 +1,7 @@
 # ros-model-cloud
 
+[![ros-model-cloud](https://github.com/ipa320/ros-model-cloud/actions/workflows/build.yml/badge.svg)](https://github.com/ipa320/ros-model-cloud/actions/workflows/build.yml)
+
 ### Clone the repository
 
 The repository has to be cloned using submodules:
