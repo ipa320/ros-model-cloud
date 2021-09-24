@@ -21,6 +21,7 @@ services:
     image: haros_melodic
     container_name: melodic
     hostname: melodic.info.my
+    user: extractor
     command: bash -c "sudo service ssh start && bash"
     ports:
       - "4003:4003"                                                           
@@ -33,11 +34,12 @@ services:
       - frontend
     tty: true
     volumes:
-      - ./results:/home/extractor/results
+      - "./results:/home/extractor/results:rw"
   noetic:
     image: haros_noetic
     container_name: noetic
     hostname: noetic.info.my
+    user: extractor
     command: bash -c "sudo service ssh start && bash"
     ports:
       - "4004:4004"                                                           
@@ -50,11 +52,12 @@ services:
       - frontend
     tty: true
     volumes:
-      - ./results:/home/extractor/results
+      - "./results:/home/extractor/results:rw"
   foxy:
     image: haros_foxy
     container_name: foxy
     hostname: foxy.info.my
+    user: extractor
     command: bash -c "sudo service ssh start && bash"
     ports:
       - "4005:4005"                                                           
@@ -67,4 +70,4 @@ services:
       - frontend
     tty: true
     volumes:
-      - ./results:/home/extractor/results
+      - "./results:/home/extractor/results:rw"
