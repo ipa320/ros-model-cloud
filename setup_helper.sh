@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git clone https://github.com/ipa320/ros-model-extractors -b extractor_web
+git clone https://github.com/ipa320/ros-model-extractors
 
 docker build --tag=haros_melodic -f ros-model-extractors/melodic/Dockerfile --build-arg enable_ssh=true --build-arg path_to_scripts="ros-model-extractors/" . 
 docker build --tag=haros_noetic -f ros-model-extractors/noetic/Dockerfile --build-arg enable_ssh=true --build-arg path_to_scripts="ros-model-extractors/" .
