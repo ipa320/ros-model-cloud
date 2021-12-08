@@ -1,6 +1,7 @@
 # Use an official Python runtime as a parent image
 FROM ubuntu:focal
 ENV DEBIAN_FRONTEND noninteractive
+ARG path_to_repo_folder
 
 RUN apt-get update && apt-get install  -y \
     wget \
@@ -27,17 +28,17 @@ WORKDIR /root/extractor-interface
 
 
 # Python requirements
-COPY extractor-interface/requirements.txt .
+COPY ${path_to_repo_folder}extractor-interface/requirements.txt .
 RUN pip install -Ir requirements.txt
 
-COPY extractor-interface/package*.json ./
+COPY ${path_to_repo_folder}extractor-interface/package*.json ./
 RUN npm install -g parcel
 RUN npm install materialize-css@next
 RUN npx browserslist@latest --update-db
 RUN npm install babel-plugin-transform-class-properties --save-dev
 RUN npm install
 
-COPY extractor-interface/ ./
+COPY ${path_to_repo_folder}extractor-interface/ ./
 RUN npm run build
 
 ENV GIT_PYTHON_REFRESH quiet
@@ -54,7 +55,7 @@ RUN mkdir -p /home/extractor/.ssh/ && \
     touch /home/extractor/.ssh/config && \
     chmod 600 /home/extractor/.ssh/config
 
-COPY --chown=extractor:root ssh_config/ /keys/
+COPY --chown=extractor:root ${path_to_repo_folder}ssh_config/ /keys/
 RUN cat /keys/ssh_key.pub >> /home/extractor/.ssh/authorized_keys
 RUN cat /keys/config >> /home/extractor/.ssh/config
 ####
