@@ -1,0 +1,7 @@
+%YAML 1.1
+---
+
+project: rclcpp_tutorials
+packages:
+    - examples_rclcpp_minimal_publisher
+
